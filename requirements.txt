@@ -1,0 +1,19 @@
+python-dotenv
+dataclass_wizard
+jq
+tiktoken
+tqdm
+# openai, langchain
+openai
+langchain
+langchain_openai
+langchain-community
+langchain-core
+langchain-experimental
+chromadb
+# streamlit
+streamlit
+watchdog
+# tools
+# googlesearch-python
+google-api-python-client
