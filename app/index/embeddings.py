@@ -1,6 +1,7 @@
 # Create embeddings for law by OpenAI and Langchain in JSON format
 
 import os
+import time
 import logging
 import chromadb
 from langchain_community.document_loaders import JSONLoader
@@ -72,8 +73,8 @@ def add_documents(
     langchain_chroma = None
 
     # put collection name back to queue
-    logger.debug(f'Collection name {collection_name} returned to queue')
     queue.put(collection_name)
+    logger.debug(f'Collection name {collection_name} returned to queue')
 
     # debug purpose to list collection names
     vdb = chromadb.PersistentClient(path=vectorstore_filepath)
@@ -134,12 +135,18 @@ def transformer(
             logger.info(f'Put collection name {collection_name} into queue')
             queue.put(collection_name)
 
+        # output queue status and size
+        qsize = queue.qsize()
+        logger.debug(f'Queue size is {qsize}')
+
         # create progress bar and prepare to enqueue tasks
         logger.info(f'Enqueue tasks...(this may take a while)')
         pbar = tqdm(total=len(batches), desc="Processing articles")
 
         def update_progress(result):
             pbar.update(1)
+            # pause 100 mini seconds to avoid too many requests
+            time.sleep(0.1)
 
         with Pool(processes=collection_partition_size) as pool:
             # enqueue tasks
@@ -151,6 +158,10 @@ def transformer(
             pool.close()
             # wait for all tasks to finish
             pool.join()
+
+            # pause 100 mini seconds to update progress bar
+            time.sleep(0.1)
+
         pbar.close()
 
         logger.info(f'Batch {len(batches)} processed')

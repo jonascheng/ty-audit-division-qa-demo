@@ -29,9 +29,9 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
 def search_taiwan_law_db(prompt_input) -> str:
     myllm = llm()
     law_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('LAW_FILEPATH_EMBEDDINGS'))
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'))
     order_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('ORDER_FILEPATH_EMBEDDINGS'))
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'))
     # The Lord of the Retrievers will hold the output of both retrievers and can be used as any other
     # retriever on different types of chains.
     lotr = MergerRetriever(

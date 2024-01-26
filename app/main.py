@@ -51,22 +51,26 @@ def transform_order():
 
 # Function to transform law embeddings
 def transform_law_embeddings():
-    from embeddings.law import transformer
+    from index.embeddings import transformer
 
     transformer(
         os.environ.get('LAW_FILEPATH_TRANSFORMED'),
-        os.environ.get('LAW_FILEPATH_EMBEDDINGS'))
+        os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')),
+        chunk_size=800,
+        chunk_overlap=100)
 
 
 # Function to transform order embeddings
 def transform_order_embeddings():
-    from embeddings.law import transformer
+    from index.embeddings import transformer
 
     transformer(
         os.environ.get('ORDER_FILEPATH_TRANSFORMED'),
-        os.environ.get('ORDER_FILEPATH_EMBEDDINGS'),
-        collection_name_prefix='order',
-        collection_partition_size=4,
+        os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')),
         chunk_size=800,
         chunk_overlap=100)
 
@@ -80,11 +84,18 @@ def get_relevant_documents_by_query(query: str):
     if not query:
         return "Please provide a query."
 
-    # load vector database from disk
-    langchain_chromas = load_vector_db(
-        vectorstore_filepath=os.environ.get('ORDER_FILEPATH_EMBEDDINGS'),
-        collection_name_prefix='order',
-        collection_partition_size=4)
+    # load vector database from disk for law
+    law_vdbs = load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+    # load vector database from disk for order
+    order_vdbs = load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+    # merge vdbs into langchain_chromas
+    langchain_chromas = law_vdbs + order_vdbs
     # create merger retriever
     retriever = create_merger_retriever(langchain_chromas)
     # get relevant documents

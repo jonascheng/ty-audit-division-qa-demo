@@ -20,7 +20,7 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "propagate": False
         },
-        "embeddings": {
+        "index": {
             "handlers": ["stdout"],
             "level": "INFO",
             "propagate": False

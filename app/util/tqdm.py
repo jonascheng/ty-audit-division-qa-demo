@@ -3,13 +3,13 @@
 # batch size is the number of documents to be processed in one batch
 def chunker(documents: list[any]) -> (list[list[any]], int):
     if len(documents) > 100000:
-        batch_size = int(len(documents) / 10000)
+        batch_size = int(len(documents) / 100000)
     elif len(documents) > 10000:
-        batch_size = int(len(documents) / 1000)
+        batch_size = int(len(documents) / 10000)
     elif len(documents) > 1000:
-        batch_size = int(len(documents) / 100)
+        batch_size = int(len(documents) / 1000)
     elif len(documents) > 100:
-        batch_size = int(len(documents) / 10)
+        batch_size = int(len(documents) / 100)
     else:
         batch_size = len(documents)
     return chunk_by_batch_size(
