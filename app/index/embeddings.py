@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # With lower percentage, the processing time will be shorter.
 # This would be useful for debugging or experimenting.
 # Set to 100% for production.
-PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = 1
+PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = 100
 
 # the metadata extraction function
 def metadata_func(record: dict, metadata: dict) -> dict:
@@ -145,8 +145,8 @@ def transformer(
 
         def update_progress(result):
             pbar.update(1)
-            # pause 100 mini seconds to avoid too many requests
-            time.sleep(0.1)
+            # pause 10 mini seconds to avoid too many requests
+            time.sleep(0.01)
 
         with Pool(processes=collection_partition_size) as pool:
             # enqueue tasks
