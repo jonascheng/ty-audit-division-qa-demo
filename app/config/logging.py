@@ -25,6 +25,11 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "propagate": False
         },
+        "query": {
+            "handlers": ["stdout"],
+            "level": "INFO",
+            "propagate": False
+        },
         "tools": {
             "handlers": ["stdout"],
             "level": "INFO",

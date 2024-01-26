@@ -71,6 +71,28 @@ def transform_order_embeddings():
         chunk_overlap=100)
 
 
+# Function to get relevant documents by query
+def get_relevant_documents_by_query(query: str):
+    from query.embeddings import load_vector_db, create_merger_retriever, get_relevant_documents
+    """
+    Get relevant documents by query.
+    """
+    if not query:
+        return "Please provide a query."
+
+    # load vector database from disk
+    langchain_chromas = load_vector_db(
+        vectorstore_filepath=os.environ.get('ORDER_FILEPATH_EMBEDDINGS'),
+        collection_name_prefix='order',
+        collection_partition_size=4)
+    # create merger retriever
+    retriever = create_merger_retriever(langchain_chromas)
+    # get relevant documents
+    search_results = retriever.get_relevant_documents(query)
+
+    return search_results
+
+
 # Run the cli app with arguments
 if __name__ == '__main__':
     # parse arguments
@@ -81,6 +103,9 @@ if __name__ == '__main__':
                         help='Transform law embeddings')
     parser.add_argument('--transform-order-embeddings', action='store_true',
                         help='Transform order embeddings')
+    # get relevant documents by query
+    parser.add_argument('--query', type=str, help='Query string')
+
     args = parser.parse_args()
 
     if args.transform_law_n_order:
@@ -90,3 +115,6 @@ if __name__ == '__main__':
         transform_law_embeddings()
     if args.transform_order_embeddings:
         transform_order_embeddings()
+    if args.query:
+        search_results = get_relevant_documents_by_query(args.query)
+        print(search_results)

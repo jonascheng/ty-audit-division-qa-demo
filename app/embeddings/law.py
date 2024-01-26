@@ -2,6 +2,7 @@
 
 import os
 import logging
+import chromadb
 from langchain_community.document_loaders import JSONLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
@@ -15,6 +16,12 @@ from util.tqdm import chunker, chunk_by_batch_size
 # Get logger
 logger = logging.getLogger(__name__)
 
+
+# Define percentage of documents to be processed, 100% means all documents.
+# With lower percentage, the processing time will be shorter.
+# This would be useful for debugging or experimenting.
+# Set to 100% for production.
+PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = 1
 
 # the metadata extraction function
 def metadata_func(record: dict, metadata: dict) -> dict:
@@ -48,19 +55,31 @@ def add_documents(
         vectorstore_filepath: str,
         queue,
         documents) -> bool:
+    # get collection name from queue
+    collection_name = queue.get()
+    logger.debug(f'Use collection name {collection_name} from queue')
+
     # create vectorstore
     langchain_chroma = Chroma(
+        collection_name=collection_name,
         embedding_function=embedder(),
         persist_directory=vectorstore_filepath,
         )
-    collection_name = queue.get()
-    logger.debug(f'Use collection name {collection_name} from queue')
     langchain_chroma.add_documents(
         documents=documents,
-        collection_name=collection_name)
+        )
     langchain_chroma.persist()
+    langchain_chroma = None
+
+    # put collection name back to queue
     logger.debug(f'Collection name {collection_name} returned to queue')
     queue.put(collection_name)
+
+    # debug purpose to list collection names
+    vdb = chromadb.PersistentClient(path=vectorstore_filepath)
+    collection_names = vdb.list_collections()
+    logger.debug(f'Collection names: {collection_names}')
+
     return True
 
 
@@ -83,8 +102,10 @@ def transformer(
     articles = loader.load()
     logger.info(f'Loaded {len(articles)} records from file {src_filepath}')
 
-    # debug: cut articles to 10%
-    articles = articles[:int(len(articles)*0.1)]
+    # cut articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%
+    if PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED < 100:
+        logger.info(f'Cutting articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%')
+        articles = articles[:int(len(articles)*PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED/100)]
 
     logger.info(f'Ready to process {len(articles)} records')
 
@@ -96,7 +117,7 @@ def transformer(
     with open(f'{src_filepath}.documents', 'w', encoding='utf-8') as f:
         for document in documents:
             f.write(f'{document}\n')
-    
+
     # calculate batch size based on total documents
     # batch size is the number of documents to be processed in one batch
     batches, batch_size = chunker(documents)
