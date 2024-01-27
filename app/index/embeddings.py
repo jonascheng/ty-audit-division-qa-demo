@@ -56,6 +56,8 @@ def add_documents(
         vectorstore_filepath: str,
         queue,
         documents) -> bool:
+    return_value = False
+
     # get collection name from queue
     collection_name = queue.get()
     logger.debug(f'Use collection name {collection_name} from queue')
@@ -75,9 +77,9 @@ def add_documents(
         # persist vectorstore
         langchain_chroma.persist()
         langchain_chroma = None
+        return_value = True
     except Exception as e:
         logger.error(f'Add {documents} to {collection_name} with error: {e}')
-        return False
 
     # put collection name back to queue
     queue.put(collection_name)
@@ -88,7 +90,7 @@ def add_documents(
     collection_names = vdb.list_collections()
     logger.debug(f'Collection names: {collection_names}')
 
-    return True
+    return return_value
 
 
 # transform embeddings for law by OpenAI and Langchain in JSON format
