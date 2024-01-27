@@ -60,17 +60,24 @@ def add_documents(
     collection_name = queue.get()
     logger.debug(f'Use collection name {collection_name} from queue')
 
-    # create vectorstore
-    langchain_chroma = Chroma(
-        collection_name=collection_name,
-        embedding_function=embedder(),
-        persist_directory=vectorstore_filepath,
-        )
-    langchain_chroma.add_documents(
-        documents=documents,
-        )
-    langchain_chroma.persist()
-    langchain_chroma = None
+    # catch exception to prevent from crashing in multiprocessing
+    try:
+        # create vectorstore
+        langchain_chroma = Chroma(
+            collection_name=collection_name,
+            embedding_function=embedder(),
+            persist_directory=vectorstore_filepath,
+            )
+        # add documents to vectorstore
+        langchain_chroma.add_documents(
+            documents=documents,
+            )
+        # persist vectorstore
+        langchain_chroma.persist()
+        langchain_chroma = None
+    except Exception as e:
+        logger.error(f'Add {documents} to {collection_name} with error: {e}')
+        return False
 
     # put collection name back to queue
     queue.put(collection_name)
