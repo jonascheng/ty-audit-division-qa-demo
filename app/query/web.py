@@ -1,12 +1,14 @@
 import logging
 
 from langchain_community.utilities import GoogleSearchAPIWrapper
+from langchain_community.document_loaders import WebBaseLoader
 
 
 # Get logger
 logger = logging.getLogger(__name__)
 
 
+# google search
 def google_search(query, site_name, site_link=None) -> list[dict]:
     """
     When user asks you to "search on google" always use this tool.
@@ -43,3 +45,11 @@ def google_search(query, site_name, site_link=None) -> list[dict]:
         result_set.append(result)
 
     return result_set
+
+
+# crawl a site and load all text from HTML webpages into a document format
+def crawler(site_link: str) -> []:
+    """
+    Crawl a site and load all text from HTML webpages into a document format.
+    """
+    return WebBaseLoader(site_link).load()

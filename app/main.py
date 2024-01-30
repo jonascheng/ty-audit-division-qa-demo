@@ -99,9 +99,24 @@ def get_relevant_documents_by_query(query: str):
     # create merger retriever
     retriever = create_merger_retriever(langchain_chromas)
     # get relevant documents
-    search_results = retriever.get_relevant_documents(query)
+    search_results = get_relevant_documents(retriever, query)
 
     return search_results
+
+
+# Function to get relevant documents by a website
+def get_relevant_documents_by_website(site_link: str):
+    from app.query.web import crawler
+    """
+    Get relevant documents by a website.
+    """
+    if not site_link:
+        return "Please provide a site link."
+
+    # crawl a site and load all text from HTML webpages into a document format
+    documents = crawler(site_link)
+
+    return get_relevant_documents_by_query(documents[0].page_content)
 
 
 # Run the cli app with arguments
@@ -116,6 +131,8 @@ if __name__ == '__main__':
                         help='Transform order embeddings')
     # get relevant documents by query
     parser.add_argument('--query', type=str, help='Query string')
+    # get html text from a website
+    parser.add_argument('--crawler', type=str, help='Crawl a website')
 
     args = parser.parse_args()
 
@@ -128,4 +145,7 @@ if __name__ == '__main__':
         transform_order_embeddings()
     if args.query:
         search_results = get_relevant_documents_by_query(args.query)
+        print(search_results)
+    if args.crawler:
+        search_results = get_relevant_documents_by_website(args.crawler)
         print(search_results)

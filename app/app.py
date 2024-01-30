@@ -9,7 +9,8 @@ from langchain.retrievers import MergerRetriever
 import config.env
 import config.logging
 from dto import const
-from tools import google, embeddings
+from query import web
+from tools import embeddings
 from util.openai import llm
 
 # Get logger
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Function for querying Taiwan law database by use cases
 def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
-    result_set = google.google_search(
+    result_set = web.google_search(
         prompt_input,
         site_name='台灣全國法規資料庫 智慧查找案例',
         site_link='https://law.moj.gov.tw/SmartSearch/Theme.aspx')
