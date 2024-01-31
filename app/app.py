@@ -9,8 +9,7 @@ from langchain.retrievers import MergerRetriever
 import config.env
 import config.logging
 from dto import const
-from query import web
-from tools import embeddings
+from query import web, embeddings
 from util.openai import llm
 
 # Get logger
@@ -29,14 +28,24 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
 # Function for querying Taiwan law database
 def search_taiwan_law_db(prompt_input) -> str:
     myllm = llm()
-    law_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'))
-    order_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'))
+
+    # load vector database from disk for law
+    law_vdbs = embeddings.load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+    # load vector database from disk for order
+    order_vdbs = embeddings.load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+    # merge vdbs into langchain_chromas
+    langchain_chromas = law_vdbs + order_vdbs
+
     # The Lord of the Retrievers will hold the output of both retrievers and can be used as any other
     # retriever on different types of chains.
-    lotr = MergerRetriever(
-        retrievers=[law_vdb.as_retriever(), order_vdb.as_retriever()])
+    lotr = embeddings.create_merger_retriever(langchain_chromas)
+
     qa = RetrievalQA.from_chain_type(
         myllm,
         retriever=lotr,

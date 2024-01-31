@@ -30,11 +30,6 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "propagate": False
         },
-        "tools": {
-            "handlers": ["stdout"],
-            "level": "INFO",
-            "propagate": False
-        },
     },
     "root": {
         "handlers": ["stdout"],
