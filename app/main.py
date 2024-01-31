@@ -81,7 +81,9 @@ def get_relevant_documents_by_query(query: str):
     """
     Get relevant documents by query.
     """
-    if not query:
+    # check if query is empty or string
+    if not isinstance(query, str):
+        logger.error(f'Query is not a string: {query}')
         return "Please provide a query."
 
     # load vector database from disk for law
@@ -106,7 +108,7 @@ def get_relevant_documents_by_query(query: str):
 
 # Function to get relevant documents by a website
 def get_relevant_documents_by_website(site_link: str):
-    from app.query.web import crawler
+    from query import web, summary
     """
     Get relevant documents by a website.
     """
@@ -114,9 +116,12 @@ def get_relevant_documents_by_website(site_link: str):
         return "Please provide a site link."
 
     # crawl a site and load all text from HTML webpages into a document format
-    documents = crawler(site_link)
+    documents = web.crawler(site_link)
 
-    return get_relevant_documents_by_query(documents[0].page_content)
+    # summarize documents
+    summary_text = summary.summarization(documents)
+
+    return get_relevant_documents_by_query(summary_text)
 
 
 # Run the cli app with arguments

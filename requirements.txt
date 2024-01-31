@@ -10,6 +10,7 @@ langchain_openai
 langchain-community
 langchain-core
 langchain-experimental
+langchainhub
 chromadb
 # streamlit
 streamlit
