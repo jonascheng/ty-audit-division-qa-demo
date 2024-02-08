@@ -1,21 +1,24 @@
 import os
-from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings, ChatOpenAI, AzureChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_openai.llms import OpenAI, AzureOpenAI
 
 
-# embedder function
+# embedding function
 def embedder():
+    from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
+
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return OpenAIEmbeddings(
+            model=os.environ.get('OPENAI_EMBEDDING_MODEL'),
             retry_min_seconds=60,
             retry_max_seconds=600,
             max_retries=10)
     # if azure type
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
         return AzureOpenAIEmbeddings(
-            azure_deployment='text-search-davinci-doc-001',
-            model='text-search-davinci-doc-001',
+            azure_deployment=os.environ.get('AZURE_EMBEDDING_DEPLOYMENT'),
+            model=os.environ.get('OPENAI_EMBEDDING_MODEL'),
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),
             openai_api_type=os.environ.get('OPENAI_API_TYPE'),
             api_key=os.environ.get('OPENAI_API_KEY'),
@@ -23,21 +26,61 @@ def embedder():
             chunk_size=1)
 
 
+# split documents into chunks function
+def text_splitter(
+        documents,
+        chunk_size=900,
+        chunk_overlap=0,
+        separators=[r"\s+", "。", "　", "＞"],):
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        # separators=["\n\n", "\r\n", "\r", "\n", " ", "。", "　"],
+        separators=separators,
+        is_separator_regex=True,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap)
+    chunks = text_splitter.split_documents(documents)
+
+    return chunks
+
+
+# token and cost estimation function
+def calculate_embedding_cost(documents) -> (int, float):
+    import tiktoken
+
+    model_name = os.environ.get('OPENAI_EMBEDDING_MODEL')
+
+    # a map to price for different models, in dollars per 1000 tokens
+    model_price = {
+        'text-embedding-3-small': 0.00002,
+        'text-embedding-3-large': 0.00013,
+    }
+
+    # set default price to 0.0001
+    price = model_price.get(model_name, 0.0001)
+
+    enc = tiktoken.encoding_for_model(model_name=model_name)
+    total_tokens = sum([len(enc.encode(page.page_content)) for page in documents])
+
+    return total_tokens, total_tokens / 1000 * price
+
+
 # llm function
 def llm():
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return OpenAI(
+            model=os.environ.get('OPENAI_LLM_MODEL'),
             retry_min_seconds=60,
             retry_max_seconds=600,
             max_retries=10,
             verbose=True)
     # if azure type
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
-        deployment_name = "text-davinci-003"
         return AzureOpenAI(
-            deployment_name=deployment_name,
-            model=deployment_name,
+            deployment_name=os.environ.get('AZURE_LLM_DEPLOYMENT'),
+            model=os.environ.get('OPENAI_LLM_MODEL'),
             temperature=0,
             frequency_penalty=0.2,
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),
@@ -52,8 +95,8 @@ def chatter():
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return ChatOpenAI(
+            model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=0,
-            model_name="gpt-3.5-turbo-1106",
             retry_max_seconds=600,
             max_retries=10,
             verbose=True)
@@ -61,8 +104,8 @@ def chatter():
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
         deployment_name = "gpt-35-turbo"
         return AzureOpenAI(
-            deployment_name=deployment_name,
-            model=deployment_name,
+            deployment_name=os.environ.get('AZURE_CHAT_DEPLOYMENT'),
+            model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=0,
             frequency_penalty=0.2,
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),

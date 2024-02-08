@@ -10,7 +10,7 @@ PWD?=$(shell pwd)
 .PHONY: setup
 setup: ## setup
 	python -m pip install --upgrade pip
-	pip install -r requirements.txt
+	pip install -r requirements.txt -q
 
 .PHONY:transform
 transform: setup ## transform data for embeddings
