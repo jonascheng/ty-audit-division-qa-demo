@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 # With lower percentage, the processing time will be shorter.
 # This would be useful for debugging or experimenting.
 # Set to 100% for production.
-PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = os.environ.get('PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED', 1)
+PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = int(os.environ.get('PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED', 1))
+
 
 # the metadata extraction function
 def metadata_func(record: dict, metadata: dict) -> dict:
@@ -117,7 +118,15 @@ def transformer(
 
     # estimate token and cost
     total_tokens, total_cost = calculate_embedding_cost(articles)
-    logger.info(f'Total tokens: {total_tokens}, total cost: {total_cost}')
+    logger.info(f'Total tokens: {total_tokens}, total cost: USD${total_cost:.5f}')
+
+    # ask for confirmation to proceed or not
+    proceed = input(f'Do you want to proceed? (yes/no)')
+    if proceed.lower() in ["yes", "y"]:
+        logger.info(f'User confirmed to proceed')
+    else:
+        logger.info(f'User cancelled the process')
+        return
 
     # # calculate batch size based on total documents
     # # batch size is the number of documents to be processed in one batch

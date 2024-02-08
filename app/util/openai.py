@@ -45,22 +45,33 @@ def text_splitter(
     return chunks
 
 
-# token and cost estimation function
+# token and cost estimation in USD function
 def calculate_embedding_cost(documents) -> (int, float):
     import tiktoken
 
     model_name = os.environ.get('OPENAI_EMBEDDING_MODEL')
+
+    # a map to encoding name for different models
+    model_encoding = {
+        'text-embedding-3-small': 'cl100k_base',
+        'text-embedding-3-large': 'cl100k_base',
+    }
+    # set default encoding name to None
+    encoding_name = model_encoding.get(model_name, None)
+    # get encoding
+    if encoding_name is None:
+        enc = tiktoken.encoding_for_model(model_name=model_name)
+    else:
+        enc = tiktoken.get_encoding(encoding_name)
 
     # a map to price for different models, in dollars per 1000 tokens
     model_price = {
         'text-embedding-3-small': 0.00002,
         'text-embedding-3-large': 0.00013,
     }
-
     # set default price to 0.0001
     price = model_price.get(model_name, 0.0001)
 
-    enc = tiktoken.encoding_for_model(model_name=model_name)
     total_tokens = sum([len(enc.encode(page.page_content)) for page in documents])
 
     return total_tokens, total_tokens / 1000 * price
