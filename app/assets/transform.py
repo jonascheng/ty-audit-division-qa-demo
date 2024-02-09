@@ -22,7 +22,6 @@
 
 import json
 import logging
-from dataclass_wizard import Container
 
 from dto.law import Law, LawCollection
 
@@ -77,14 +76,29 @@ def transformer(data: list) -> LawCollection:
                 article_no = article['ArticleNo']
                 article_content = article['ArticleContent']
 
+            # combine article content
+            article_combined_content = f'''
+            法規名稱：{law_name}\n
+            法規類別：{law_category}\n
+            條文內容：{article_content_chapter}\n
+            {article_no}：{article_content}
+            '''
+
+            # remove space
+            article_content_chapter = remove_space(article_content_chapter)
+            article_no = remove_space(article_no)
+            article_content = remove_space(article_content)
+            article_combined_content = remove_space(article_combined_content)
+
             law = Law(
                 LawLevel=law_level,
                 LawName=law_name,
                 LawURL=law_url,
                 LawCategory=law_category,
-                LawArticleChapter=remove_space(article_content_chapter),
-                LawArticleNo=remove_space(article_no),
-                LawArticleContent=remove_space(article_content)
+                LawArticleChapter=article_content_chapter,
+                LawArticleNo=article_no,
+                LawArticleContent=article_content,
+                LawArticleCombinedContent=article_combined_content,
             )
             articles.data.append(law)
 

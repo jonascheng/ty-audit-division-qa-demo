@@ -1,5 +1,10 @@
 from dataclasses import dataclass
-from dataclass_wizard import JSONListWizard, JSONFileWizard, JSONSerializable, json_field
+from dataclass_wizard import (
+  JSONListWizard,
+  JSONFileWizard,
+  JSONSerializable,
+  json_field
+)
 
 
 @dataclass(frozen=True)
@@ -11,6 +16,7 @@ class Law(JSONFileWizard):
     LawArticleChapter: str = json_field('LawArticleChapter', all=True)
     LawArticleNo: str = json_field('LawArticleNo', all=True)
     LawArticleContent: str = json_field('LawArticleContent', all=True)
+    LawArticleCombinedContent: str = json_field('LawArticleCombinedContent', all=True)
 
 
 @dataclass(frozen=True)

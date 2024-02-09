@@ -12,8 +12,8 @@ setup: ## setup
 	python -m pip install --upgrade pip
 	pip install -r requirements.txt -q
 
-.PHONY:transform
-transform: setup ## transform data for embeddings
+.PHONY: law-n-order-load-transform
+law-n-order-load-transform: setup ## load and transform data for embeddings
 	python app/main.py --transform-law-n-order
 
 .PHONY: run
@@ -21,12 +21,12 @@ run: setup ## run
 	streamlit run app/app.py
 
 .PHONY: law-embeddings
-law-embeddings: setup ## transform law embeddings
+law-embeddings: setup ## create law embeddings
 	rm -rf assets/law.json/ChLaw_embeddings.chorma
 	python app/main.py --transform-law-embeddings
 
 .PHONY: order-embeddings
-order-embeddings: setup ## transform order embeddings
+order-embeddings: setup ## create order embeddings
 	rm -rf assets/order.json/ChOrder_embeddings.chorma
 	python app/main.py --transform-order-embeddings
 

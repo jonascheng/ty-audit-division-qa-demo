@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Function to transform law data
 def transform_law():
-    from assets.law import loader, transformer
+    from assets.transform import loader, transformer
 
     # transform law data
     data = loader(os.environ.get('LAW_FILEPATH'))
@@ -33,7 +33,7 @@ def transform_law():
 
 # Function to transform order data
 def transform_order():
-    from assets.law import loader, transformer
+    from assets.transform import loader, transformer
 
     # transform order data
     data = loader(os.environ.get('ORDER_FILEPATH'))
@@ -129,7 +129,7 @@ def get_relevant_documents_by_website(site_link: str):
 if __name__ == '__main__':
     # display type of AI will be used for the app
     logger.info(f'Using AI type: {os.environ.get("OPENAI_API_TYPE")}')
-    
+
     # parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--transform-law-n-order', action='store_true',
