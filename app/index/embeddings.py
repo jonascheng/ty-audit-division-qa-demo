@@ -31,6 +31,7 @@ def metadata_func(record: dict, metadata: dict) -> dict:
     metadata["law_category"] = record.get("LawCategory")
     metadata["law_article_chapter"] = record.get("LawArticleChapter")
     metadata["law_article_no"] = record.get("LawArticleNo")
+    metadata["law_article_content"] = record.get("LawArticleContent")
 
     # replace source with law url
     if record.get("LawURL"):
@@ -87,31 +88,31 @@ def transformer(
         vectorstore_filepath: str,
         collection_name_prefix: str = 'law',
         collection_partition_size: int = 4,
-        chunk_size=900,
-        chunk_overlap=100):
+        chunk_size=800,
+        chunk_overlap=10):
     # load data
     logger.info(f'Loading JSON data from file {src_filepath}')
     loader = JSONLoader(
         file_path=src_filepath,
         jq_schema='.data[]',
-        content_key='LawArticleContent',
+        content_key='LawArticleCombinedContent',
         metadata_func=metadata_func
     )
     articles = loader.load()
-    logger.info(f'Loaded {len(articles)} records from file {src_filepath}')
+    logger.info(f'Loaded {len(articles)} articles from file {src_filepath}')
 
     # cut articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%
     if PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED < 100:
         logger.info(f'Cutting articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%')
         articles = articles[:int(len(articles)*PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED/100)]
 
-    logger.info(f'Ready to process {len(articles)} records')
+    logger.info(f'Ready to process {len(articles)} articles')
 
-    # split articles into documents
+    # split articles into chunked documents
     documents = text_splitter(articles, chunk_size, chunk_overlap)
 
     # save documents to file
-    logger.info(f'Saving documents to file {src_filepath}.documents')
+    logger.info(f'Saving chunked documents to file {src_filepath}.documents')
     with open(f'{src_filepath}.documents', 'w', encoding='utf-8') as f:
         for document in documents:
             f.write(f'{document}\n')

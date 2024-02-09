@@ -60,7 +60,7 @@ def transform_law_embeddings():
         collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_PREFIX'),
         collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')),
         chunk_size=800,
-        chunk_overlap=100)
+        chunk_overlap=10)
 
 
 # Function to transform order embeddings
@@ -73,7 +73,7 @@ def transform_order_embeddings():
         collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_PREFIX'),
         collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')),
         chunk_size=800,
-        chunk_overlap=100)
+        chunk_overlap=10)
 
 
 # Function to get relevant documents by query
