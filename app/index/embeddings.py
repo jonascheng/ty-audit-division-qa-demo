@@ -170,7 +170,7 @@ def transformer(
 
         for i in range(collection_partition_size):
             # create collection name
-            collection_name = f'{collection_name_prefix}_{i}'
+            collection_name = f'{collection_name_prefix}'
             # put collection name into queue
             logger.info(f'Put collection name {collection_name} into queue')
             queue.put(collection_name)

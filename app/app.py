@@ -2,14 +2,11 @@ import os
 import logging
 import streamlit as st
 
-from langchain.chains import RetrievalQA
-from langchain.retrievers import MergerRetriever
-
 # Import proprietory module
 import config.env
 import config.logging
 from dto import const
-from query import web, embeddings
+from query import web
 from util.openai import llm
 
 # Get logger
@@ -27,34 +24,29 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
 
 # Function for querying Taiwan law database
 def search_taiwan_law_db(prompt_input) -> str:
-    myllm = llm()
+    from query.embeddings import load_vector_db, create_merger_retriever
+    from query import qa
 
     # load vector database from disk for law
-    law_vdbs = embeddings.load_vector_db(
+    law_vdb = load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
-        collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_PREFIX'),
-        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+        collection_name=os.environ.get('EMBEDDINGS_LAW_COLLECTION_NAME'))
     # load vector database from disk for order
-    order_vdbs = embeddings.load_vector_db(
+    order_vdb = load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
-        collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_PREFIX'),
-        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+        collection_name=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
-    langchain_chromas = law_vdbs + order_vdbs
+    langchain_chromas = [law_vdb, order_vdb]
+    # create merger retriever
+    retriever = create_merger_retriever(langchain_chromas)
+    # create retrieval qa
+    rqa = qa.create_retrieval_qa(
+        retriever=retriever,
+        return_source_documents=False)
+    # get relevant documents
+    search_results = qa.query(rqa, prompt_input)
 
-    # The Lord of the Retrievers will hold the output of both retrievers and can be used as any other
-    # retriever on different types of chains.
-    lotr = embeddings.create_merger_retriever(langchain_chromas)
-
-    qa = RetrievalQA.from_chain_type(
-        myllm,
-        retriever=lotr,
-        chain_type='stuff',
-        return_source_documents=True,
-        verbose=True,
-    )
-    result_set = qa({'query': prompt_input})
-    return result_set
+    return search_results['result']
 
 
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')

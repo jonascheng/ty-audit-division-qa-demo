@@ -11,8 +11,31 @@ from util.openai import embedder
 logger = logging.getLogger(__name__)
 
 
-# function to load the persisted database from disk
+# function to load vector store with single collection from disk
 def load_vector_db(
+        vectorstore_filepath: str,
+        collection_name: str) -> Chroma:
+    """
+    Load the vector database from disk.
+    """
+    vdb = chromadb.PersistentClient(path=vectorstore_filepath)
+    # list collection names
+    collection_names = vdb.list_collections()
+    logger.info(f'Collection names: {collection_names}')
+
+    langchain_chroma = Chroma(
+        client=vdb,
+        collection_name=collection_name,
+        embedding_function=embedder())
+    logger.info(f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
+
+    logger.info(f'Loaded vector database from {vectorstore_filepath}')
+
+    return langchain_chroma
+
+
+# function to load multiple vectore store from disk
+def load_multiple_vector_db(
         vectorstore_filepath: str,
         collection_name_prefix: str = 'law',
         collection_partition_size: int = 4) -> []:
@@ -64,10 +87,10 @@ def create_merger_retriever(langchain_chromas: []) -> MergerRetriever:
     Create merger retriever.
     """
     return MergerRetriever(
-        retrievers=[langchain_chroma.as_retriever(
-            search_type="mmr",
-            search_kwargs={"k": 1}
-        ) for langchain_chroma in langchain_chromas])
+        retrievers=[
+            langchain_chroma.as_retriever(
+                search_kwargs={'k': 3})
+            for langchain_chroma in langchain_chromas])
 
 
 def get_relevant_documents(retriever: BaseRetriever, query: str) -> list[dict]:
