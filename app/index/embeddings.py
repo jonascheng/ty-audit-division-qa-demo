@@ -40,6 +40,34 @@ def metadata_func(record: dict, metadata: dict) -> dict:
     return metadata
 
 
+# precreate the vectorstore with collection names
+def precreate_vectorstore(
+        vectorstore_filepath: str,
+        queue):
+    # iterate through collection names
+    for i in range(queue.qsize()):
+        # get collection name from queue
+        collection_name = queue.get()
+        logger.info(f'Use collection name {collection_name} from queue')
+
+        # catch exception to prevent from crashing in multiprocessing
+        try:
+            # create vectorstore
+            langchain_chroma = Chroma(
+                collection_name=collection_name,
+                persist_directory=vectorstore_filepath,
+                )
+            # persist vectorstore
+            langchain_chroma.persist()
+            langchain_chroma = None
+        except Exception as e:
+            logger.error(f'Create vectorstore with collection name {collection_name} with error: {e}')
+
+        # put collection name back to queue
+        queue.put(collection_name)
+        logger.info(f'Collection name {collection_name} returned to queue')
+
+
 # run documents through the embeddings and add to the vectorstore.
 def add_documents(
         vectorstore_filepath: str,
@@ -109,6 +137,7 @@ def transformer(
     logger.info(f'Ready to process {len(articles)} articles')
 
     # split articles into chunked documents
+    logger.info(f'Splitting articles into chunked documents with chunk size {chunk_size} and overlap {chunk_overlap}')
     documents = text_splitter(articles, chunk_size, chunk_overlap)
 
     # save documents to file
@@ -116,6 +145,7 @@ def transformer(
     with open(f'{src_filepath}.documents', 'w', encoding='utf-8') as f:
         for document in documents:
             f.write(f'{document}\n')
+    logger.info(f'Saved {len(documents)} chunked documents to file {src_filepath}.documents')
 
     # estimate token and cost
     total_tokens, total_cost = calculate_embedding_cost(articles)
@@ -129,49 +159,52 @@ def transformer(
         logger.info('User cancelled the process')
         return
 
-    # # calculate batch size based on total documents
-    # # batch size is the number of documents to be processed in one batch
-    # batches, batch_size = chunker(documents)
-    # logger.info(f'Batch size is {batch_size}, total batches is {len(batches)}')
+    # calculate batch size based on total documents
+    # batch size is the number of documents to be processed in one batch
+    batches, batch_size = chunker(documents)
+    logger.info(f'Batch size is {batch_size}, total batches is {len(batches)}')
 
-    # with Manager() as manager:
-    #     # create the shared queue for each collection partition
-    #     queue = manager.Queue()
+    with Manager() as manager:
+        # create the shared queue for each collection partition
+        queue = manager.Queue()
 
-    #     for i in range(collection_partition_size):
-    #         # create collection name
-    #         collection_name = f'{collection_name_prefix}_{i}'
-    #         # put collection name into queue
-    #         logger.info(f'Put collection name {collection_name} into queue')
-    #         queue.put(collection_name)
+        for i in range(collection_partition_size):
+            # create collection name
+            collection_name = f'{collection_name_prefix}_{i}'
+            # put collection name into queue
+            logger.info(f'Put collection name {collection_name} into queue')
+            queue.put(collection_name)
 
-    #     # output queue status and size
-    #     qsize = queue.qsize()
-    #     logger.debug(f'Queue size is {qsize}')
+        # output queue status and size
+        qsize = queue.qsize()
+        logger.info(f'Queue size is {qsize}')
 
-    #     # create progress bar and prepare to enqueue tasks
-    #     logger.info(f'Enqueue tasks...(this may take a while)')
-    #     pbar = tqdm(total=len(batches), desc="Processing articles")
+        # create progress bar and prepare to enqueue tasks
+        logger.info('Enqueue tasks...(this may take a while)')
+        pbar = tqdm(total=len(batches), desc="Processing articles")
 
-    #     def update_progress(result):
-    #         pbar.update(1)
-    #         # pause 10 mini seconds to avoid too many requests
-    #         time.sleep(0.01)
+        # precreate vectorstore with collection names
+        precreate_vectorstore(vectorstore_filepath, queue)
 
-    #     with Pool(processes=collection_partition_size) as pool:
-    #         # enqueue tasks
-    #         for batch in batches:
-    #             pool.apply_async(add_documents,
-    #                             (vectorstore_filepath, queue, batch),
-    #                             callback=update_progress)
-    #         # close the process pool
-    #         pool.close()
-    #         # wait for all tasks to finish
-    #         pool.join()
+        def update_progress(result):
+            pbar.update(1)
+            # pause 10 mini seconds to avoid too many requests
+            time.sleep(0.01)
 
-    #         # pause 100 mini seconds to update progress bar
-    #         time.sleep(0.1)
+        with Pool(processes=collection_partition_size) as pool:
+            # enqueue tasks
+            for batch in batches:
+                pool.apply_async(add_documents,
+                                (vectorstore_filepath, queue, batch),
+                                callback=update_progress)
+            # close the process pool
+            pool.close()
+            # wait for all tasks to finish
+            pool.join()
 
-    #     pbar.close()
+            # pause 100 mini seconds to update progress bar
+            time.sleep(0.1)
 
-    #     logger.info(f'Batch {len(batches)} processed')
+        pbar.close()
+
+        logger.info(f'Batch {len(batches)} processed')
