@@ -8,16 +8,13 @@ logger = logging.getLogger(__name__)
 
 # function to create retrieval qa
 def create_retrieval_qa(
+        llm,
         retriever: BaseRetriever,
         chain_type: str = 'refine',
         return_source_documents: bool = False) -> RetrievalQA:
-    from util.openai import llm
-
-    myllm = llm()
-    
     # create a chain to answer questions
     return RetrievalQA.from_chain_type(
-        llm=myllm,
+        llm=llm,
         retriever=retriever,
         chain_type=chain_type,
         return_source_documents=return_source_documents)

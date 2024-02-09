@@ -95,7 +95,7 @@ def get_relevant_documents_by_query(query: str):
         vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
         collection_name=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
-    langchain_chromas = [law_vdb, order_vdb]
+    langchain_chromas = [law_vdb]
     # create merger retriever
     retriever = create_merger_retriever(langchain_chromas)
     # get relevant documents
@@ -124,8 +124,9 @@ def get_relevant_documents_by_website(site_link: str):
 
 # Function to do retrieval QA
 def retrieval_qa(query: str):
-    from query.embeddings import load_vector_db, create_merger_retriever
-    from query import qa
+    from query import embeddings, qa
+    from util.openai import llm, chatter
+
     """
     Retrieval QA.
     """
@@ -135,19 +136,20 @@ def retrieval_qa(query: str):
         return "Please provide a query."
 
     # load vector database from disk for law
-    law_vdb = load_vector_db(
+    law_vdb = embeddings.load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
         collection_name=os.environ.get('EMBEDDINGS_LAW_COLLECTION_NAME'))
     # load vector database from disk for order
-    order_vdb = load_vector_db(
+    order_vdb = embeddings.load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
         collection_name=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
-    langchain_chromas = [law_vdb, order_vdb]
+    langchain_chromas = [law_vdb]
     # create merger retriever
-    retriever = create_merger_retriever(langchain_chromas)
+    retriever = embeddings.create_merger_retriever(langchain_chromas)
     # create retrieval qa
     rqa = qa.create_retrieval_qa(
+        llm=chatter(),
         retriever=retriever,
         return_source_documents=True)
     # get relevant documents
