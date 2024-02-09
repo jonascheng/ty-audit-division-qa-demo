@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def create_retrieval_qa(
         llm,
         retriever: BaseRetriever,
-        chain_type: str = 'refine',
+        chain_type: str = 'stuff',
         return_source_documents: bool = False) -> RetrievalQA:
     # create a chain to answer questions
     return RetrievalQA.from_chain_type(

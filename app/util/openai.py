@@ -84,10 +84,14 @@ def calculate_embedding_cost(documents) -> (int, float):
 
 # llm function
 def llm():
+    temperature = 0
+    frequency_penalty = 0.2
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return OpenAI(
             model=os.environ.get('OPENAI_LLM_MODEL'),
+            temperature=temperature,
+            frequency_penalty=frequency_penalty,
             max_retries=10,
             verbose=True)
     # if azure type
@@ -95,8 +99,8 @@ def llm():
         return AzureOpenAI(
             deployment_name=os.environ.get('AZURE_LLM_DEPLOYMENT'),
             model=os.environ.get('OPENAI_LLM_MODEL'),
-            temperature=0,
-            frequency_penalty=0.2,
+            temperature=temperature,
+            frequency_penalty=frequency_penalty,
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),
             openai_api_type=os.environ.get('OPENAI_API_TYPE'),
             api_version=os.environ.get('OPENAI_API_VERSION'),
@@ -106,20 +110,23 @@ def llm():
 
 # chat function
 def chatter():
+    temperature = 0
+    max_tokens = 256
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return ChatOpenAI(
             model=os.environ.get('OPENAI_CHAT_MODEL'),
-            temperature=0,
+            temperature=temperature,
+            max_tokens=max_tokens,
             max_retries=10,
             verbose=True)
     # if azure type
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
-        return AzureOpenAI(
+        return AzureChatOpenAI(
             deployment_name=os.environ.get('AZURE_CHAT_DEPLOYMENT'),
             model=os.environ.get('OPENAI_CHAT_MODEL'),
-            temperature=0,
-            frequency_penalty=0.2,
+            temperature=temperature,
+            max_tokens=max_tokens,
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),
             openai_api_type=os.environ.get('OPENAI_API_TYPE'),
             api_version=os.environ.get('OPENAI_API_VERSION'),
