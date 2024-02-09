@@ -21,7 +21,6 @@ def summarization(documents: []) -> str:
     # create chatter
     llm = chatter()
 
-
     # replace "Helpful Answer:" with "請以中文提供有用的答案:"
     prompt_template = """The following is a set of documents
     {docs}

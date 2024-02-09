@@ -64,7 +64,10 @@ def create_merger_retriever(langchain_chromas: []) -> MergerRetriever:
     Create merger retriever.
     """
     return MergerRetriever(
-        retrievers=[langchain_chroma.as_retriever() for langchain_chroma in langchain_chromas])
+        retrievers=[langchain_chroma.as_retriever(
+            search_type="mmr",
+            search_kwargs={"k": 1}
+        ) for langchain_chroma in langchain_chromas])
 
 
 def get_relevant_documents(retriever: BaseRetriever, query: str) -> list[dict]:

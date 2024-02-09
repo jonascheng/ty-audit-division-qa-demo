@@ -88,8 +88,6 @@ def llm():
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return OpenAI(
             model=os.environ.get('OPENAI_LLM_MODEL'),
-            retry_min_seconds=60,
-            retry_max_seconds=600,
             max_retries=10,
             verbose=True)
     # if azure type
@@ -113,12 +111,10 @@ def chatter():
         return ChatOpenAI(
             model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=0,
-            retry_max_seconds=600,
             max_retries=10,
             verbose=True)
     # if azure type
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
-        deployment_name = "gpt-35-turbo"
         return AzureOpenAI(
             deployment_name=os.environ.get('AZURE_CHAT_DEPLOYMENT'),
             model=os.environ.get('OPENAI_CHAT_MODEL'),

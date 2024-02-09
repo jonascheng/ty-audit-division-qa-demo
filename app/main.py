@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import argparse
 
@@ -125,6 +124,42 @@ def get_relevant_documents_by_website(site_link: str):
     return get_relevant_documents_by_query(summary_text)
 
 
+# Function to do retrieval QA
+def retrieval_qa(query: str):
+    from query.embeddings import load_vector_db, create_merger_retriever
+    from query import qa
+    """
+    Retrieval QA.
+    """
+    # check if query is empty or string
+    if not isinstance(query, str):
+        logger.error(f'Query is not a string: {query}')
+        return "Please provide a query."
+
+    # load vector database from disk for law
+    law_vdbs = load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+    # load vector database from disk for order
+    order_vdbs = load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
+        collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_PREFIX'),
+        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')))
+    # merge vdbs into langchain_chromas
+    langchain_chromas = law_vdbs + order_vdbs
+    # create merger retriever
+    retriever = create_merger_retriever(langchain_chromas)
+    # create retrieval qa
+    rqa = qa.create_retrieval_qa(
+        retriever=retriever,
+        return_source_documents=True)
+    # get relevant documents
+    search_results = qa.query(rqa, query)
+
+    return search_results
+
+
 # Run the cli app with arguments
 if __name__ == '__main__':
     # display type of AI will be used for the app
@@ -140,6 +175,7 @@ if __name__ == '__main__':
                         help='Transform order embeddings')
     # get relevant documents by query
     parser.add_argument('--query', type=str, help='Query string')
+    parser.add_argument('--qa', type=str, help='Query string by Retrieval QA')
     # get html text from a website
     parser.add_argument('--crawler', type=str, help='Crawl a website')
 
@@ -154,6 +190,9 @@ if __name__ == '__main__':
         transform_order_embeddings()
     if args.query:
         search_results = get_relevant_documents_by_query(args.query)
+        print(search_results)
+    if args.qa:
+        search_results = retrieval_qa(args.qa)
         print(search_results)
     if args.crawler:
         search_results = get_relevant_documents_by_website(args.crawler)
