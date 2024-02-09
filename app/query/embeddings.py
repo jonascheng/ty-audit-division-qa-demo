@@ -23,7 +23,7 @@ def load_vector_db(
     # list collection names
     collection_names = vdb.list_collections()
     logger.info(f'Collection names: {collection_names}')
-    
+
     langchain_chromas = []
     for i in range(collection_partition_size):
         collection_name = f'{collection_name_prefix}_{i}'
@@ -77,5 +77,7 @@ def get_relevant_documents(retriever: BaseRetriever, query: str) -> list[dict]:
     # the data structure of search_results is
     # a list of Document objects
     search_results = retriever.get_relevant_documents(query)
+
+    logger.info(f'Found {len(search_results)} relevant documents')
 
     return search_results
