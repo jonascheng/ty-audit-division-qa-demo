@@ -1,6 +1,10 @@
 import os
+import logging
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_openai.llms import OpenAI, AzureOpenAI
+
+# Get logger
+logger = logging.getLogger(__name__)
 
 
 # embedding function
@@ -71,6 +75,7 @@ def calculate_embedding_cost(documents) -> (int, float):
     }
     # set default price to 0.0001
     price = model_price.get(model_name, 0.0001)
+    logger.info(f'Using model {model_name}, encoding {enc.name}, price ${price:.5f} per 1000 tokens')
 
     total_tokens = sum([len(enc.encode(page.page_content)) for page in documents])
 

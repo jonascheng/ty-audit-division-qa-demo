@@ -90,7 +90,7 @@ def transformer(
         chunk_size=900,
         chunk_overlap=100):
     # load data
-    logger.info(f'Loading data from file {src_filepath}')
+    logger.info(f'Loading JSON data from file {src_filepath}')
     loader = JSONLoader(
         file_path=src_filepath,
         jq_schema='.data[]',
@@ -121,11 +121,11 @@ def transformer(
     logger.info(f'Total tokens: {total_tokens}, total cost: USD${total_cost:.5f}')
 
     # ask for confirmation to proceed or not
-    proceed = input(f'Do you want to proceed? (yes/no)')
+    proceed = input('Do you want to proceed? (yes/no)')
     if proceed.lower() in ["yes", "y"]:
-        logger.info(f'User confirmed to proceed')
+        logger.info('User confirmed to proceed')
     else:
-        logger.info(f'User cancelled the process')
+        logger.info('User cancelled the process')
         return
 
     # # calculate batch size based on total documents
