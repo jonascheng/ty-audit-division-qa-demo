@@ -25,16 +25,12 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
 # Function for querying Taiwan law database
 def search_taiwan_law_db(prompt_input) -> str:
     from query import embeddings, qa
-    from util.openai import llm, chatter
+    from util.openai import chatter
 
-    # load vector database from disk for law
+    # load vector database from disk for taiwan law
     law_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_LAW_COLLECTION_NAME'))
-    # load vector database from disk for order
-    order_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'))
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
     langchain_chromas = [law_vdb]
     # create merger retriever

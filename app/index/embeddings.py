@@ -43,41 +43,23 @@ def metadata_func(record: dict, metadata: dict) -> dict:
 # precreate the vectorstore with collection names
 def precreate_vectorstore(
         vectorstore_filepath: str,
-        queue):
-    # iterate through collection names
-    for i in range(queue.qsize()):
-        # get collection name from queue
-        collection_name = queue.get()
-        logger.info(f'Use collection name {collection_name} from queue')
-
-        # catch exception to prevent from crashing in multiprocessing
-        try:
-            # create vectorstore
-            langchain_chroma = Chroma(
-                collection_name=collection_name,
-                persist_directory=vectorstore_filepath,
-                )
-            # persist vectorstore
-            langchain_chroma.persist()
-            langchain_chroma = None
-        except Exception as e:
-            logger.error(f'Create vectorstore with collection name {collection_name} with error: {e}')
-
-        # put collection name back to queue
-        queue.put(collection_name)
-        logger.info(f'Collection name {collection_name} returned to queue')
+        collection_name: str):
+    # create vectorstore
+    langchain_chroma = Chroma(
+        collection_name=collection_name,
+        persist_directory=vectorstore_filepath,
+        )
+    # persist vectorstore
+    langchain_chroma.persist()
+    langchain_chroma = None
 
 
 # run documents through the embeddings and add to the vectorstore.
 def add_documents(
         vectorstore_filepath: str,
-        queue,
+        collection_name: str,
         documents) -> bool:
     return_value = False
-
-    # get collection name from queue
-    collection_name = queue.get()
-    logger.debug(f'Use collection name {collection_name} from queue')
 
     # catch exception to prevent from crashing in multiprocessing
     try:
@@ -98,10 +80,6 @@ def add_documents(
     except Exception as e:
         logger.error(f'Add {documents} to {collection_name} with error: {e}')
 
-    # put collection name back to queue
-    queue.put(collection_name)
-    logger.debug(f'Collection name {collection_name} returned to queue')
-
     # debug purpose to list collection names
     vdb = chromadb.PersistentClient(path=vectorstore_filepath)
     collection_names = vdb.list_collections()
@@ -114,8 +92,7 @@ def add_documents(
 def transformer(
         src_filepath: str,
         vectorstore_filepath: str,
-        collection_name_prefix: str = 'law',
-        collection_partition_size: int = 4,
+        collection_name: str = 'law',
         chunk_size=800,
         chunk_overlap=10):
     # load data
@@ -164,38 +141,28 @@ def transformer(
     batches, batch_size = chunker(documents)
     logger.info(f'Batch size is {batch_size}, total batches is {len(batches)}')
 
+    # determine number of worker by CPU count, and reserve one for main process
+    worker_count = os.cpu_count() - 1
+    logger.info(f'Worker count is {worker_count}')
+
     with Manager() as manager:
-        # create the shared queue for each collection partition
-        queue = manager.Queue()
-
-        for i in range(collection_partition_size):
-            # create collection name
-            collection_name = f'{collection_name_prefix}'
-            # put collection name into queue
-            logger.info(f'Put collection name {collection_name} into queue')
-            queue.put(collection_name)
-
-        # output queue status and size
-        qsize = queue.qsize()
-        logger.info(f'Queue size is {qsize}')
-
         # create progress bar and prepare to enqueue tasks
         logger.info('Enqueue tasks...(this may take a while)')
         pbar = tqdm(total=len(batches), desc="Processing articles")
 
         # precreate vectorstore with collection names
-        precreate_vectorstore(vectorstore_filepath, queue)
+        precreate_vectorstore(vectorstore_filepath, collection_name)
 
         def update_progress(result):
             pbar.update(1)
             # pause 10 mini seconds to avoid too many requests
             time.sleep(0.01)
 
-        with Pool(processes=collection_partition_size) as pool:
+        with Pool(processes=worker_count) as pool:
             # enqueue tasks
             for batch in batches:
                 pool.apply_async(add_documents,
-                                (vectorstore_filepath, queue, batch),
+                                (vectorstore_filepath, collection_name, batch),
                                 callback=update_progress)
             # close the process pool
             pool.close()

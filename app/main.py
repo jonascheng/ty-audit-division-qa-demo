@@ -55,9 +55,8 @@ def transform_law_embeddings():
 
     transformer(
         os.environ.get('LAW_FILEPATH_TRANSFORMED'),
-        os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
-        collection_name_prefix=os.environ.get('EMBEDDINGS_LAW_COLLECTION_NAME'),
-        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')),
+        os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'),
         chunk_size=800,
         chunk_overlap=10)
 
@@ -68,9 +67,8 @@ def transform_order_embeddings():
 
     transformer(
         os.environ.get('ORDER_FILEPATH_TRANSFORMED'),
-        os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
-        collection_name_prefix=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'),
-        collection_partition_size=int(os.environ.get('EMBEDDINGS_COLLECTION_PARTITION_SIZE')),
+        os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'),
         chunk_size=800,
         chunk_overlap=10)
 
@@ -86,14 +84,10 @@ def get_relevant_documents_by_query(query: str):
         logger.error(f'Query is not a string: {query}')
         return "Please provide a query."
 
-    # load vector database from disk for law
+    # load vector database from disk for taiwan law
     law_vdb = load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_LAW_COLLECTION_NAME'))
-    # load vector database from disk for order
-    order_vdb = load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'))
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
     langchain_chromas = [law_vdb]
     # create merger retriever
@@ -125,7 +119,7 @@ def get_relevant_documents_by_website(site_link: str):
 # Function to do retrieval QA
 def retrieval_qa(query: str):
     from query import embeddings, qa
-    from util.openai import llm, chatter
+    from util.openai import chatter
 
     """
     Retrieval QA.
@@ -135,14 +129,10 @@ def retrieval_qa(query: str):
         logger.error(f'Query is not a string: {query}')
         return "Please provide a query."
 
-    # load vector database from disk for law
+    # load vector database from disk for taiwan law
     law_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_LAW_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_LAW_COLLECTION_NAME'))
-    # load vector database from disk for order
-    order_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_ORDER_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_ORDER_COLLECTION_NAME'))
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
     langchain_chromas = [law_vdb]
     # create merger retriever

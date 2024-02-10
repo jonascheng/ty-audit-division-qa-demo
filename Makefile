@@ -22,12 +22,10 @@ run: setup ## run
 
 .PHONY: law-embeddings
 law-embeddings: setup ## create law embeddings
-	rm -rf assets/law.json/ChLaw_embeddings.chorma
 	python app/main.py --transform-law-embeddings
 
 .PHONY: order-embeddings
 order-embeddings: setup ## create order embeddings
-	rm -rf assets/order.json/ChOrder_embeddings.chorma
 	python app/main.py --transform-order-embeddings
 
 .PHONY: docker-build
