@@ -1,6 +1,11 @@
 import os
 import logging
 import streamlit as st
+from langchain.schema import (
+    SystemMessage,
+    HumanMessage,
+    AIMessage
+)
 
 # Import proprietory module
 import config.env
@@ -55,29 +60,27 @@ with st.sidebar:
 # Store LLM generated responses
 if "messages" not in st.session_state.keys():
     st.session_state.messages = [
-        {
-            "role": "assistant",
-            "content": "你好，我是AI小助手，我可以協助你關於台灣法規及相關案例檢索，有什麼我可以協助你的嗎?"
-        }
+        SystemMessage(content="你是台灣審計部AI小助手，請以繁體中文回答審計人員提問"),
+        AIMessage(content="你好，我可以協助你關於台灣法規及相關案例檢索，有什麼可以協助你的嗎?")
     ]
 
 # Display chat messages
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
+    if isinstance(message, AIMessage):
+        st.chat_message("assistant").write(message.content)
+    elif isinstance(message, HumanMessage):
+        st.chat_message("user").write(message.content)
 
 # User-provided prompt
 if prompt := st.chat_input(placeholder="請輸入你的問題"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
+    st.session_state.messages.append(HumanMessage(content=prompt))
+    st.chat_message("user").write(prompt)
 
 # Generate a new response if last message is not from assistant
-if st.session_state.messages[-1]["role"] != "assistant":
+if not isinstance(st.session_state.messages[-1], AIMessage):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            # response = search_taiwan_law_db_by_use_cases(prompt)
             response = search_taiwan_law_db(prompt)
             st.write(response)
-    message = {"role": "assistant", "content": response}
+    message = AIMessage(content=response)
     st.session_state.messages.append(message)

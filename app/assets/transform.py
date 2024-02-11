@@ -40,7 +40,9 @@ def remove_space(text: str) -> str:
     return text.replace(' ', '').replace('├', '').replace('─', '').replace('┼', '').replace('┤', '').replace('│', '')
 
 
-def transformer(data: list) -> LawCollection:
+def transformer(
+        data: list,
+        allowed_category: list = []) -> LawCollection:
     # a list of transformed law with data type Law, and exclude abandoned law
     articles = LawCollection(data=[])
 
@@ -64,6 +66,16 @@ def transformer(data: list) -> LawCollection:
         if law_abandon_note:
             logger.debug(f'Law {law_name}, {law_category} is abandoned with abandon note {law_abandon_note}, skip')
             continue
+
+        if allowed_category:
+            allowed_category_found = False
+            for category in allowed_category:
+                if category in law_category:
+                    allowed_category_found = True
+                    break
+            if not allowed_category_found:
+                logger.debug(f'Law {law_name}, {law_category} is not in allowed category, skip')
+                continue
 
         # iterate through each article in each law
         article_content_chapter = ""

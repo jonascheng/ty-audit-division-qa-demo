@@ -19,7 +19,9 @@ def transform_law():
     data = loader(os.environ.get('LAW_FILEPATH'))
     logger.info(f'Loaded {len(data)} records from file {os.environ.get("LAW_FILEPATH")}')
 
-    collection = transformer(data)
+    collection = transformer(
+        data,
+        allowed_category=['衛生福利部＞食品藥物管理目'])
     logger.info(f'Transformed {len(collection.data)} records')
 
     # write to file in JSON format
@@ -38,7 +40,9 @@ def transform_order():
     data = loader(os.environ.get('ORDER_FILEPATH'))
     logger.info(f'Loaded {len(data)} records from file {os.environ.get("ORDER_FILEPATH")}')
 
-    collection = transformer(data)
+    collection = transformer(
+        data,
+        allowed_category=['衛生福利部＞食品藥物管理目'])
     logger.info(f'Transformed {len(collection.data)} records')
 
     # write to file in JSON format

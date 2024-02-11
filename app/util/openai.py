@@ -111,7 +111,7 @@ def llm():
 # chat function
 def chatter():
     temperature = 0
-    max_tokens = 256
+    max_tokens = 512
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return ChatOpenAI(
