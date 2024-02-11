@@ -147,7 +147,7 @@ def retrieval_qa(query: str):
         retriever=retriever,
         return_source_documents=True)
     # get relevant documents
-    search_results = qa.query(rqa, query)
+    search_results = qa.query_by_retrieval_qa(rqa, query)
 
     return search_results
 

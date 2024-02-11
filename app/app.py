@@ -28,7 +28,7 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
 
 
 # Function for querying Taiwan law database
-def search_taiwan_law_db(prompt_input) -> str:
+def search_taiwan_law_db(prompt_input, chat_history) -> str:
     from query import embeddings, qa
     from util.openai import chatter
 
@@ -41,14 +41,16 @@ def search_taiwan_law_db(prompt_input) -> str:
     # create merger retriever
     retriever = embeddings.create_merger_retriever(langchain_chromas)
     # create retrieval qa
-    rqa = qa.create_retrieval_qa(
+    rqa = qa.create_conversational_retrieval_qa(
         llm=chatter(),
         retriever=retriever,
         return_source_documents=False)
     # get relevant documents
-    search_results = qa.query(rqa, prompt_input)
-
-    return search_results['result']
+    search_results = qa.query_by_conversational_retrieval_qa(
+        rqa,
+        prompt_input,
+        chat_history)
+    return search_results['answer']
 
 
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')
@@ -63,6 +65,7 @@ if "messages" not in st.session_state.keys():
         SystemMessage(content="你是台灣審計部AI小助手，請以繁體中文回答審計人員提問"),
         AIMessage(content="你好，我可以協助你關於台灣法規及相關案例檢索，有什麼可以協助你的嗎?")
     ]
+    st.session_state['chat_history'] = []
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -80,7 +83,11 @@ if prompt := st.chat_input(placeholder="請輸入你的問題"):
 if not isinstance(st.session_state.messages[-1], AIMessage):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = search_taiwan_law_db(prompt)
+            response = search_taiwan_law_db(prompt, st.session_state.chat_history)
+
             st.write(response)
     message = AIMessage(content=response)
     st.session_state.messages.append(message)
+    st.session_state.chat_history.append(
+        (prompt, message.content)
+    )
