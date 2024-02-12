@@ -30,13 +30,10 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
 # Function for querying Taiwan law database
 def search_taiwan_law_db(
         prompt_input,
+        vector_db,
         chat_history) -> str:
-    # load vector database from disk for taiwan law
-    law_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
-    langchain_chromas = [law_vdb]
+    langchain_chromas = [vector_db]
     # create merger retriever
     retriever = embeddings.create_merger_retriever(langchain_chromas)
     # create retrieval qa
@@ -68,7 +65,11 @@ if "messages" not in st.session_state.keys():
         llm=chatter(),
         memory_key='chat_history',
         return_messages=True)
-    # st.session_state['chat_history'] = []
+    # load vector database from disk for taiwan law
+    st.session_state.vdb = embeddings.load_vector_db(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
+
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -88,11 +89,9 @@ if not isinstance(st.session_state.messages[-1], AIMessage):
         with st.spinner("Thinking..."):
             response = search_taiwan_law_db(
                 prompt,
+                st.session_state.vdb,
                 st.session_state.chat_history)
 
             st.write(response)
     message = AIMessage(content=response)
     st.session_state.messages.append(message)
-    # st.session_state.chat_history.append(
-    #     (prompt, message.content)
-    # )

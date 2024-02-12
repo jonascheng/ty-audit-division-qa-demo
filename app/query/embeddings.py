@@ -82,14 +82,15 @@ def similarity_search(langchain_chromas: [], query: str) -> []:
 
 
 # function to create merger retriever
-def create_merger_retriever(langchain_chromas: []) -> MergerRetriever:
+def create_merger_retriever(
+        langchain_chromas: [],) -> MergerRetriever:
     """
     Create merger retriever.
     """
     return MergerRetriever(
         retrievers=[
             langchain_chroma.as_retriever(
-                search_kwargs={'k': 3})
+                search_kwargs={'k': 5})
             for langchain_chroma in langchain_chromas])
 
 
