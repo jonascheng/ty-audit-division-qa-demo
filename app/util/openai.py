@@ -1,7 +1,5 @@
 import os
 import logging
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_openai.llms import OpenAI, AzureOpenAI
 
 # Get logger
 logger = logging.getLogger(__name__)
@@ -84,6 +82,8 @@ def calculate_embedding_cost(documents) -> (int, float):
 
 # llm function
 def llm():
+    from langchain_openai.llms import OpenAI, AzureOpenAI
+
     temperature = 0
     frequency_penalty = 0.2
     # if not azure type
@@ -110,14 +110,14 @@ def llm():
 
 # chat function
 def chatter():
+    from langchain_openai import ChatOpenAI, AzureChatOpenAI
+
     temperature = 0
-    max_tokens = 512
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return ChatOpenAI(
             model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=temperature,
-            max_tokens=max_tokens,
             max_retries=10,
             verbose=True)
     # if azure type
@@ -126,9 +126,23 @@ def chatter():
             deployment_name=os.environ.get('AZURE_CHAT_DEPLOYMENT'),
             model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=temperature,
-            max_tokens=max_tokens,
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),
             openai_api_type=os.environ.get('OPENAI_API_TYPE'),
             api_version=os.environ.get('OPENAI_API_VERSION'),
             api_key=os.environ.get('OPENAI_API_KEY'),
             verbose=True)
+
+
+# memory function
+def memory(
+        llm,
+        memory_key: str = 'chat_history',
+        return_messages: bool = False,
+):
+    from langchain.memory import ConversationSummaryBufferMemory
+
+    return ConversationSummaryBufferMemory(
+        llm=llm,
+        memory_key=memory_key,
+        return_messages=return_messages,
+        verbose=True)

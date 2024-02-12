@@ -38,12 +38,14 @@ def query_by_retrieval_qa(qa: RetrievalQA, query: str) -> list[dict]:
 # function to create conversational retrieval qa
 def create_conversational_retrieval_qa(
         llm,
+        memory,
         retriever: BaseRetriever,
         chain_type: str = 'stuff',
         return_source_documents: bool = False) -> ConversationalRetrievalChain:
     # create a chain to answer questions
     return ConversationalRetrievalChain.from_llm(
         llm=llm,
+        memory=memory,
         retriever=retriever,
         chain_type=chain_type,
         return_source_documents=return_source_documents,
@@ -53,8 +55,7 @@ def create_conversational_retrieval_qa(
 # function to get relevant documents by conversational retrieval qa
 def query_by_conversational_retrieval_qa(
         qa: ConversationalRetrievalChain,
-        question: str,
-        chat_history: list = []) -> list[dict]:
+        question: str,) -> list[dict]:
     """
     Get result by a query.
     """
@@ -65,7 +66,6 @@ def query_by_conversational_retrieval_qa(
     search_results = qa(
             {
                 "question": question,
-                "chat_history": chat_history
             }
         )
 
