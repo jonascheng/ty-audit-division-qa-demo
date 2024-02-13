@@ -64,7 +64,8 @@ def transformer(
         # article['LawForeword'] = law['LawForeword']
 
         if law_abandon_note:
-            logger.debug(f'Law {law_name}, {law_category} is abandoned with abandon note {law_abandon_note}, skip')
+            logger.debug(
+                f'Law {law_name}, {law_category} is abandoned with abandon note {law_abandon_note}, skip')
             continue
 
         if allowed_category:
@@ -74,7 +75,8 @@ def transformer(
                     allowed_category_found = True
                     break
             if not allowed_category_found:
-                logger.debug(f'Law {law_name}, {law_category} is not in allowed category, skip')
+                logger.debug(
+                    f'Law {law_name}, {law_category} is not in allowed category, skip')
                 continue
 
         # iterate through each article in each law
@@ -88,19 +90,10 @@ def transformer(
                 article_no = article['ArticleNo']
                 article_content = article['ArticleContent']
 
-            # combine article content
-            article_combined_content = f'''
-            法規名稱：{law_name}\n
-            法規類別：{law_category}\n
-            條文內容：{article_content_chapter}\n
-            {article_no}：{article_content}
-            '''
-
             # remove space
             article_content_chapter = remove_space(article_content_chapter)
             article_no = remove_space(article_no)
             article_content = remove_space(article_content)
-            article_combined_content = remove_space(article_combined_content)
 
             law = Law(
                 LawLevel=law_level,
@@ -110,7 +103,6 @@ def transformer(
                 LawArticleChapter=article_content_chapter,
                 LawArticleNo=article_no,
                 LawArticleContent=article_content,
-                LawArticleCombinedContent=article_combined_content,
             )
             articles.data.append(law)
 

@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 # With lower percentage, the processing time will be shorter.
 # This would be useful for debugging or experimenting.
 # Set to 100% for production.
-PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = int(os.environ.get('PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED', 1))
+PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED = int(
+    os.environ.get('PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED', 1))
 
 
 # the metadata extraction function
@@ -31,7 +32,6 @@ def metadata_func(record: dict, metadata: dict) -> dict:
     metadata["law_category"] = record.get("LawCategory")
     metadata["law_article_chapter"] = record.get("LawArticleChapter")
     metadata["law_article_no"] = record.get("LawArticleNo")
-    metadata["law_article_content"] = record.get("LawArticleContent")
 
     # replace source with law url
     if record.get("LawURL"):
@@ -48,7 +48,7 @@ def precreate_vectorstore(
     langchain_chroma = Chroma(
         collection_name=collection_name,
         persist_directory=vectorstore_filepath,
-        )
+    )
     # persist vectorstore
     langchain_chroma.persist()
     langchain_chroma = None
@@ -68,11 +68,11 @@ def add_documents(
             collection_name=collection_name,
             embedding_function=embedder(),
             persist_directory=vectorstore_filepath,
-            )
+        )
         # add documents to vectorstore
         langchain_chroma.add_documents(
             documents=documents,
-            )
+        )
         # persist vectorstore
         langchain_chroma.persist()
         langchain_chroma = None
@@ -100,7 +100,7 @@ def transformer(
     loader = JSONLoader(
         file_path=src_filepath,
         jq_schema='.data[]',
-        content_key='LawArticleCombinedContent',
+        content_key='LawArticleContent',
         metadata_func=metadata_func
     )
     articles = loader.load()
@@ -108,25 +108,42 @@ def transformer(
 
     # cut articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%
     if PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED < 100:
-        logger.info(f'Cutting articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%')
-        articles = articles[:int(len(articles)*PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED/100)]
+        logger.info(
+            f'Cutting articles to {PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED}%')
+        articles = articles[:int(
+            len(articles)*PERCENTAGE_OF_DOCUMENTS_TO_BE_PROCESSED/100)]
 
     logger.info(f'Ready to process {len(articles)} articles')
 
     # split articles into chunked documents
-    logger.info(f'Splitting articles into chunked documents with chunk size {chunk_size} and overlap {chunk_overlap}')
+    logger.info(
+        f'Splitting articles into chunked documents with chunk size {chunk_size} and overlap {chunk_overlap}')
     documents = text_splitter(articles, chunk_size, chunk_overlap)
+
+    # iterate documents and augment documents with metadata
+    for doc in documents:
+        law_name = doc.metadata["law_name"]
+        law_category = doc.metadata["law_category"]
+        law_article_chapter = doc.metadata["law_article_chapter"]
+        law_article_no = doc.metadata["law_article_no"]
+        law_article_content = doc.page_content
+        # augmented article content
+        augmented_article_content = f"法規名稱：{law_name}\n法規類別：{law_category}\n條文內容：{law_article_chapter}\n{law_article_no}：{law_article_content}"
+        # update page content
+        doc.page_content = augmented_article_content
 
     # save documents to file
     logger.info(f'Saving chunked documents to file {src_filepath}.documents')
     with open(f'{src_filepath}.documents', 'w', encoding='utf-8') as f:
         for document in documents:
             f.write(f'{document}\n')
-    logger.info(f'Saved {len(documents)} chunked documents to file {src_filepath}.documents')
+    logger.info(
+        f'Saved {len(documents)} chunked documents to file {src_filepath}.documents')
 
     # estimate token and cost
     total_tokens, total_cost = calculate_embedding_cost(articles)
-    logger.info(f'Total tokens: {total_tokens}, total cost: USD${total_cost:.5f}')
+    logger.info(
+        f'Total tokens: {total_tokens}, total cost: USD${total_cost:.5f}')
 
     # ask for confirmation to proceed or not
     proceed = input('Do you want to proceed? (yes/no)')
@@ -162,8 +179,8 @@ def transformer(
             # enqueue tasks
             for batch in batches:
                 pool.apply_async(add_documents,
-                                (vectorstore_filepath, collection_name, batch),
-                                callback=update_progress)
+                                 (vectorstore_filepath, collection_name, batch),
+                                 callback=update_progress)
             # close the process pool
             pool.close()
             # wait for all tasks to finish

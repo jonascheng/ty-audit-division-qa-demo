@@ -28,11 +28,6 @@ def transform_law():
     # write to file in JSON format
     collection.to_json_file(os.environ.get(
         'LAW_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
-    # write to file in txt format
-    with open(os.environ.get('LAW_FILEPATH_TRANSFORMED_TXT'), 'w', encoding='utf-8') as f:
-        for article in collection.data:
-            f.write(
-                f'{article.LawCategory}\t{article.LawArticleChapter}\t{article.LawArticleNo}\t{article.LawArticleContent}\n')
 
 
 # Function to transform order data
@@ -52,11 +47,6 @@ def transform_order():
     # write to file in JSON format
     collection.to_json_file(os.environ.get(
         'ORDER_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
-    # write to file in txt format
-    with open(os.environ.get('ORDER_FILEPATH_TRANSFORMED_TXT'), 'w', encoding='utf-8') as f:
-        for article in collection.data:
-            f.write(
-                f'{article.LawCategory}\t{article.LawArticleChapter}\t{article.LawArticleNo}\t{article.LawArticleContent}\n')
 
 
 # Function to transform law embeddings
