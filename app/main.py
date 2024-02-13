@@ -17,7 +17,8 @@ def transform_law():
 
     # transform law data
     data = loader(os.environ.get('LAW_FILEPATH'))
-    logger.info(f'Loaded {len(data)} records from file {os.environ.get("LAW_FILEPATH")}')
+    logger.info(
+        f'Loaded {len(data)} records from file {os.environ.get("LAW_FILEPATH")}')
 
     collection = transformer(
         data,
@@ -25,11 +26,13 @@ def transform_law():
     logger.info(f'Transformed {len(collection.data)} records')
 
     # write to file in JSON format
-    collection.to_json_file(os.environ.get('LAW_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
+    collection.to_json_file(os.environ.get(
+        'LAW_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
     # write to file in txt format
     with open(os.environ.get('LAW_FILEPATH_TRANSFORMED_TXT'), 'w', encoding='utf-8') as f:
         for article in collection.data:
-            f.write(f'{article.LawCategory}\t{article.LawArticleChapter}\t{article.LawArticleNo}\t{article.LawArticleContent}\n')
+            f.write(
+                f'{article.LawCategory}\t{article.LawArticleChapter}\t{article.LawArticleNo}\t{article.LawArticleContent}\n')
 
 
 # Function to transform order data
@@ -38,7 +41,8 @@ def transform_order():
 
     # transform order data
     data = loader(os.environ.get('ORDER_FILEPATH'))
-    logger.info(f'Loaded {len(data)} records from file {os.environ.get("ORDER_FILEPATH")}')
+    logger.info(
+        f'Loaded {len(data)} records from file {os.environ.get("ORDER_FILEPATH")}')
 
     collection = transformer(
         data,
@@ -46,11 +50,13 @@ def transform_order():
     logger.info(f'Transformed {len(collection.data)} records')
 
     # write to file in JSON format
-    collection.to_json_file(os.environ.get('ORDER_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
+    collection.to_json_file(os.environ.get(
+        'ORDER_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
     # write to file in txt format
     with open(os.environ.get('ORDER_FILEPATH_TRANSFORMED_TXT'), 'w', encoding='utf-8') as f:
         for article in collection.data:
-            f.write(f'{article.LawCategory}\t{article.LawArticleChapter}\t{article.LawArticleNo}\t{article.LawArticleContent}\n')
+            f.write(
+                f'{article.LawCategory}\t{article.LawArticleChapter}\t{article.LawArticleNo}\t{article.LawArticleContent}\n')
 
 
 # Function to transform law embeddings
