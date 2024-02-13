@@ -1,6 +1,7 @@
 import os
 import logging
 import streamlit as st
+from streamlit_extras.mention import mention
 from langchain.schema import (
     SystemMessage,
     HumanMessage,
@@ -39,14 +40,16 @@ def search_taiwan_law_db(
     # create retrieval qa
     rqa = qa.create_conversational_retrieval_qa(
         llm=chatter(),
-        memory=chat_history,
+        # memory=chat_history,
         retriever=retriever,
-        return_source_documents=False)
+        return_source_documents=True)
     # get relevant documents
     search_results = qa.query_by_conversational_retrieval_qa(
         rqa,
         prompt_input,)
-    return search_results['answer']
+    # sources = ", ".join(search_results['source_documents'])
+    # return f"{search_results['answer']}\nsources: {sources}"
+    return search_results
 
 
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')
@@ -70,11 +73,18 @@ if "messages" not in st.session_state.keys():
         vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
         collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
 
-
 # Display chat messages
 for message in st.session_state.messages:
     if isinstance(message, AIMessage):
-        st.chat_message("assistant").write(message.content)
+        with st.chat_message("assistant"):
+            st.write(message.content)
+            if message.additional_kwargs:
+                for doc in message.additional_kwargs["source_documents"]:
+                    mention(
+                        label=f'{doc.metadata["law_name"]} {doc.metadata["law_article_chapter"]} {doc.metadata["law_article_no"]}',
+                        icon="📌",
+                        url=doc.metadata["source"],
+                    )
     elif isinstance(message, HumanMessage):
         st.chat_message("user").write(message.content)
 
@@ -91,7 +101,14 @@ if not isinstance(st.session_state.messages[-1], AIMessage):
                 prompt,
                 st.session_state.vdb,
                 st.session_state.chat_history)
-
-            st.write(response)
-    message = AIMessage(content=response)
+            st.write(response["answer"])
+            for doc in response["source_documents"]:
+                mention(
+                    label=f'{doc.metadata["law_name"]} {doc.metadata["law_article_chapter"]} {doc.metadata["law_article_no"]}',
+                    icon="📌",
+                    url=doc.metadata["source"],
+                )
+    message = AIMessage(
+        content=response["answer"],
+        additional_kwargs={"source_documents": response["source_documents"]})
     st.session_state.messages.append(message)
