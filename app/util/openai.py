@@ -11,6 +11,8 @@ def embedder():
 
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
+        logger.debug(
+            f'Creating OpenAIEmbeddings with model {os.environ.get("OPENAI_EMBEDDING_MODEL")}')
         return OpenAIEmbeddings(
             model=os.environ.get('OPENAI_EMBEDDING_MODEL'),
             retry_min_seconds=60,
@@ -18,6 +20,8 @@ def embedder():
             max_retries=10)
     # if azure type
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
+        logger.debug(
+            f'Creating AzureOpenAIEmbeddings with model {os.environ.get("OPENAI_EMBEDDING_MODEL")}')
         return AzureOpenAIEmbeddings(
             azure_deployment=os.environ.get('AZURE_EMBEDDING_DEPLOYMENT'),
             model=os.environ.get('OPENAI_EMBEDDING_MODEL'),
@@ -73,9 +77,11 @@ def calculate_embedding_cost(documents) -> (int, float):
     }
     # set default price to 0.0001
     price = model_price.get(model_name, 0.0001)
-    logger.info(f'Using model {model_name}, encoding {enc.name}, price ${price:.5f} per 1000 tokens')
+    logger.info(
+        f'Using model {model_name}, encoding {enc.name}, price ${price:.5f} per 1000 tokens')
 
-    total_tokens = sum([len(enc.encode(page.page_content)) for page in documents])
+    total_tokens = sum([len(enc.encode(page.page_content))
+                       for page in documents])
 
     return total_tokens, total_tokens / 1000 * price
 
