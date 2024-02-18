@@ -28,6 +28,10 @@ law-embeddings: setup ## create law embeddings
 order-embeddings: setup ## create order embeddings
 	python app/main.py --transform-order-embeddings
 
+.PHONY: investigation-embeddings
+investigation-embeddings: setup ## create investigation report embeddings
+	python app/main.py --transform-investigation-embeddings
+
 .PHONY: docker-build
 docker-build: ## build docker image
 	${DOCKER} build -t ${DOCKER_IMG_NAME}:${COMMIT_SHA} .

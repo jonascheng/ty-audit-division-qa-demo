@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import List
 
 # Get logger
 logger = logging.getLogger(__name__)
@@ -35,9 +36,9 @@ def embedder():
 # split documents into chunks function
 def text_splitter(
         documents,
-        chunk_size=900,
-        chunk_overlap=0,
-        separators=[r"\s+", "。", "　", "＞"],):
+        chunk_size: int = 900,
+        chunk_overlap: int = 0,
+        separators: List[str] = None,):
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 
     text_splitter = RecursiveCharacterTextSplitter(

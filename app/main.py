@@ -56,7 +56,8 @@ def transform_law_embeddings():
     transformer(
         os.environ.get('LAW_FILEPATH_TRANSFORMED'),
         os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'),
+        collection_name=os.environ.get(
+            'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
         chunk_overlap=10)
 
@@ -68,9 +69,25 @@ def transform_order_embeddings():
     transformer(
         os.environ.get('ORDER_FILEPATH_TRANSFORMED'),
         os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'),
+        collection_name=os.environ.get(
+            'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
         chunk_overlap=10)
+
+
+# Transform investigation report embeddings
+def transform_investigation_embeddings():
+    from index.embeddings import InvestigationReportEmbeddings
+
+    transformer = InvestigationReportEmbeddings(
+        os.environ.get('INVESTIGATION_REPORTS_FILEPATH'),
+        os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=os.environ.get(
+            'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME'),
+        chunk_size=800,
+        chunk_overlap=100
+    )
+    transformer.run()
 
 
 # Function to get relevant documents by query
@@ -87,7 +104,7 @@ def get_relevant_documents_by_query(query: str):
     # load vector database from disk for taiwan law
     law_vdb = load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
+        collection_name=os.environ.get('EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
     langchain_chromas = [law_vdb]
     # create merger retriever
@@ -132,7 +149,7 @@ def retrieval_qa(query: str):
     # load vector database from disk for taiwan law
     law_vdb = embeddings.load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
+        collection_name=os.environ.get('EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'))
     # merge vdbs into langchain_chromas
     langchain_chromas = [law_vdb]
     # create merger retriever
@@ -155,12 +172,18 @@ if __name__ == '__main__':
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--transform-law-n-order', action='store_true',
+    parser.add_argument('--transform-law-n-order',
+                        action='store_true',
                         help='Transform law and order data for embeddings')
-    parser.add_argument('--transform-law-embeddings', action='store_true',
+    parser.add_argument('--transform-law-embeddings',
+                        action='store_true',
                         help='Transform law embeddings')
-    parser.add_argument('--transform-order-embeddings', action='store_true',
+    parser.add_argument('--transform-order-embeddings',
+                        action='store_true',
                         help='Transform order embeddings')
+    parser.add_argument('--transform-investigation-embeddings',
+                        action='store_true',
+                        help='Transform investigation report embeddings')
     # get relevant documents by query
     parser.add_argument('--query', type=str, help='Query string')
     parser.add_argument('--qa', type=str, help='Query string by Retrieval QA')
@@ -176,6 +199,8 @@ if __name__ == '__main__':
         transform_law_embeddings()
     if args.transform_order_embeddings:
         transform_order_embeddings()
+    if args.transform_investigation_embeddings:
+        transform_investigation_embeddings()
     if args.query:
         search_results = get_relevant_documents_by_query(args.query)
         print(search_results)

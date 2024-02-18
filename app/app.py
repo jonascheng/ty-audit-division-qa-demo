@@ -71,7 +71,7 @@ if "messages" not in st.session_state.keys():
     # load vector database from disk for taiwan law
     st.session_state.vdb = embeddings.load_vector_db(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_COLLECTION_NAME'))
+        collection_name=os.environ.get('EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'))
 
 # Display chat messages
 for message in st.session_state.messages:
