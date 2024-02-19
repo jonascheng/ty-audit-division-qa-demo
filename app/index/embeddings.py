@@ -180,12 +180,16 @@ class Embeddings(metaclass=abc.ABCMeta):
             # pause 10 mini seconds to avoid too many requests
             time.sleep(0.01)
 
+        def update_error(error):
+            logger.error(f'Error: {error}')
+
         with Pool(processes=worker_count) as pool:
             # enqueue tasks
             for batch in batches:
                 pool.apply_async(self._add_documents,
-                                 (batch),
-                                 callback=update_progress)
+                                 (batch, ),
+                                 callback=update_progress,
+                                 error_callback=update_error,)
             # close the process pool
             pool.close()
             # wait for all tasks to finish
