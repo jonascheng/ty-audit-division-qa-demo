@@ -25,9 +25,17 @@ def transform_law():
         allowed_category=['衛生福利部＞食品藥物管理目'])
     logger.info(f'Transformed {len(collection.data)} records')
 
+    # get output path from env 'LAW_TRANSFORMED_PATH'
+    path = os.environ.get('LAW_TRANSFORMED_PATH')
+    # create full path if not exists
+    os.makedirs(path, exist_ok=True)
+    # join path with file name of 'LAW_FILEPATH'
+    filepath = os.path.join(path, os.path.basename(os.environ.get('LAW_FILEPATH')))
     # write to file in JSON format
-    collection.to_json_file(os.environ.get(
-        'LAW_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
+    collection.to_json_file(
+        filepath, 'w',
+        ensure_ascii=False,
+        indent=4)
 
 
 # Function to transform order data
@@ -44,50 +52,59 @@ def transform_order():
         allowed_category=['衛生福利部＞食品藥物管理目'])
     logger.info(f'Transformed {len(collection.data)} records')
 
+    # get output file path from env 'ORDER_TRANSFORMED_PATH'
+    path = os.environ.get('ORDER_TRANSFORMED_PATH')
+    # create full path if not exists
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    # join path with file name of 'ORDER_FILEPATH'
+    filepath = os.path.join(path, os.path.basename(os.environ.get('ORDER_FILEPATH')))
     # write to file in JSON format
-    collection.to_json_file(os.environ.get(
-        'ORDER_FILEPATH_TRANSFORMED'), 'w', ensure_ascii=False, indent=4)
+    collection.to_json_file(
+        filepath, 'w',
+        ensure_ascii=False,
+        indent=4)
 
 
 # Function to transform law embeddings
-def transform_law_embeddings():
-    from index.embeddings import transformer
+def create_law_embeddings():
+    from index.embeddings import LawEmbeddings
 
-    transformer(
-        os.environ.get('LAW_FILEPATH_TRANSFORMED'),
+    LawEmbeddings(
+        os.environ.get('LAW_TRANSFORMED_PATH'),
         os.environ.get('EMBEDDINGS_FILEPATH'),
         collection_name=os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
-        chunk_overlap=10)
+        chunk_overlap=10
+    ).run()
 
 
-# Function to transform order embeddings
-def transform_order_embeddings():
-    from index.embeddings import transformer
+# Create order embeddings
+def create_order_embeddings():
+    from index.embeddings import LawEmbeddings
 
-    transformer(
-        os.environ.get('ORDER_FILEPATH_TRANSFORMED'),
+    LawEmbeddings(
+        os.environ.get('ORDER_TRANSFORMED_PATH'),
         os.environ.get('EMBEDDINGS_FILEPATH'),
         collection_name=os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
-        chunk_overlap=10)
+        chunk_overlap=10
+    ).run()
 
 
-# Transform investigation report embeddings
-def transform_investigation_embeddings():
+# Create investigation report embeddings
+def create_investigation_embeddings():
     from index.embeddings import InvestigationReportEmbeddings
 
-    transformer = InvestigationReportEmbeddings(
-        os.environ.get('INVESTIGATION_REPORTS_FILEPATH'),
+    InvestigationReportEmbeddings(
+        os.environ.get('INVESTIGATION_REPORTS_PATH'),
         os.environ.get('EMBEDDINGS_FILEPATH'),
         collection_name=os.environ.get(
             'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME'),
         chunk_size=800,
         chunk_overlap=100
-    )
-    transformer.run()
+    ).run()
 
 
 # Function to get relevant documents by query
@@ -175,15 +192,15 @@ if __name__ == '__main__':
     parser.add_argument('--transform-law-n-order',
                         action='store_true',
                         help='Transform law and order data for embeddings')
-    parser.add_argument('--transform-law-embeddings',
+    parser.add_argument('--create-law-embeddings',
                         action='store_true',
-                        help='Transform law embeddings')
-    parser.add_argument('--transform-order-embeddings',
+                        help='Create law embeddings')
+    parser.add_argument('--create-order-embeddings',
                         action='store_true',
-                        help='Transform order embeddings')
-    parser.add_argument('--transform-investigation-embeddings',
+                        help='Create order embeddings')
+    parser.add_argument('--create-investigation-embeddings',
                         action='store_true',
-                        help='Transform investigation report embeddings')
+                        help='Create investigation report embeddings')
     # get relevant documents by query
     parser.add_argument('--query', type=str, help='Query string')
     parser.add_argument('--qa', type=str, help='Query string by Retrieval QA')
@@ -195,12 +212,12 @@ if __name__ == '__main__':
     if args.transform_law_n_order:
         transform_law()
         transform_order()
-    if args.transform_law_embeddings:
-        transform_law_embeddings()
-    if args.transform_order_embeddings:
-        transform_order_embeddings()
-    if args.transform_investigation_embeddings:
-        transform_investigation_embeddings()
+    if args.create_law_embeddings:
+        create_law_embeddings()
+    if args.create_order_embeddings:
+        create_order_embeddings()
+    if args.create_investigation_embeddings:
+        create_investigation_embeddings()
     if args.query:
         search_results = get_relevant_documents_by_query(args.query)
         print(search_results)

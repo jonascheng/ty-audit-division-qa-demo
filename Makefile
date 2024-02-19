@@ -22,15 +22,15 @@ run: setup ## run
 
 .PHONY: law-embeddings
 law-embeddings: setup ## create law embeddings
-	python app/main.py --transform-law-embeddings
+	python app/main.py --create-law-embeddings
 
 .PHONY: order-embeddings
 order-embeddings: setup ## create order embeddings
-	python app/main.py --transform-order-embeddings
+	python app/main.py --create-order-embeddings
 
 .PHONY: investigation-embeddings
 investigation-embeddings: setup ## create investigation report embeddings
-	python app/main.py --transform-investigation-embeddings
+	python app/main.py --create-investigation-embeddings
 
 .PHONY: docker-build
 docker-build: ## build docker image
