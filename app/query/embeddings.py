@@ -1,5 +1,6 @@
 import logging
 import chromadb
+from typing import Union, List
 from langchain_community.vectorstores import Chroma
 from langchain_core.retrievers import BaseRetriever
 from langchain.retrievers import MergerRetriever
@@ -27,58 +28,12 @@ def load_vector_db(
         client=vdb,
         collection_name=collection_name,
         embedding_function=embedder())
-    logger.info(f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
+    logger.info(
+        f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
 
     logger.info(f'Loaded vector database from {vectorstore_filepath}')
 
     return langchain_chroma
-
-
-# function to load multiple vectore store from disk
-def load_multiple_vector_db(
-        vectorstore_filepath: str,
-        collection_name_prefix: str = 'law',
-        collection_partition_size: int = 4) -> []:
-    """
-    Load the vector database from disk.
-    """
-    vdb = chromadb.PersistentClient(path=vectorstore_filepath)
-    # list collection names
-    collection_names = vdb.list_collections()
-    logger.info(f'Collection names: {collection_names}')
-
-    langchain_chromas = []
-    for i in range(collection_partition_size):
-        collection_name = f'{collection_name_prefix}_{i}'
-        # check if collection exists
-        # vdb.get_collection(name=collection_name)
-        langchain_chroma = Chroma(
-            client=vdb,
-            collection_name=collection_name,
-            embedding_function=embedder())
-        logger.info(f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
-        langchain_chromas.append(langchain_chroma)
-
-    logger.info(f'Loaded vector database from {vectorstore_filepath}')
-
-    return langchain_chromas
-
-
-# function to query similar documents
-def similarity_search(langchain_chromas: [], query: str) -> []:
-    """
-    Query similar documents by Chromas.
-    """
-    if not query:
-        return "Please provide a query."
-
-    # the data structure of search_results is
-    # a list of SearchResult objects
-    search_results = []
-    for langchain_chroma in langchain_chromas:
-        search_results.append(langchain_chroma.similarity_search(query))
-
-    return search_results
 
 
 # function to create merger retriever
@@ -94,17 +49,43 @@ def create_merger_retriever(
             for langchain_chroma in langchain_chromas])
 
 
-def get_relevant_documents(retriever: BaseRetriever, query: str) -> list[dict]:
-    """
-    Get relevant documents by retriever.
-    """
-    if not query:
-        return "Please provide a query."
+# A class to query embeddings
+class QueryEmbeddings:
+    def __init__(
+            self,
+            vectorstore_filepath: str,
+            collection_name: str):
+        import chromadb
+        from langchain_community.vectorstores import Chroma
 
-    # the data structure of search_results is
-    # a list of Document objects
-    search_results = retriever.get_relevant_documents(query)
+        # load vector store with single collection from disk
+        self.vdb = chromadb.PersistentClient(
+            path=vectorstore_filepath)
+        # list collection names
+        collection_names = self.vdb.list_collections()
+        logger.debug(f'Collection names: {collection_names}')
 
-    logger.info(f'Found {len(search_results)} relevant documents')
+        self.store = Chroma(
+            client=self.vdb,
+            collection_name=collection_name,
+            embedding_function=embedder())
+        logger.info(
+            f'There are {self.store._collection.count()} in the collection {collection_name}')
 
-    return search_results
+    def similarity_search(self, query: str) -> Union[str, List[dict]]:
+        # query similar documents
+        if not query:
+            return "Please provide a query."
+
+        # the data structure of search_results is
+        # a list of SearchResult objects along with scores
+        search_results = self.store.similarity_search_with_score(query)
+        # search_results = self.store.similarity_search(query)
+        logger.info(
+            f'Found {len(search_results)} similar documents with query: {query}')
+
+        return search_results
+
+    # function to return retriever
+    def as_retriever(self) -> BaseRetriever:
+        return self.store.as_retriever()

@@ -11,7 +11,7 @@ import config.logging
 logger = logging.getLogger(__name__)
 
 
-# Function to transform law data
+# Transform law data for creating embeddings
 def transform_law():
     from assets.transform import loader, transformer
 
@@ -30,7 +30,8 @@ def transform_law():
     # create full path if not exists
     os.makedirs(path, exist_ok=True)
     # join path with file name of 'LAW_FILEPATH'
-    filepath = os.path.join(path, os.path.basename(os.environ.get('LAW_FILEPATH')))
+    filepath = os.path.join(path, os.path.basename(
+        os.environ.get('LAW_FILEPATH')))
     # write to file in JSON format
     collection.to_json_file(
         filepath, 'w',
@@ -38,7 +39,7 @@ def transform_law():
         indent=4)
 
 
-# Function to transform order data
+# Transform order data for creating embeddings
 def transform_order():
     from assets.transform import loader, transformer
 
@@ -57,7 +58,8 @@ def transform_order():
     # create full path if not exists
     os.makedirs(os.path.dirname(path), exist_ok=True)
     # join path with file name of 'ORDER_FILEPATH'
-    filepath = os.path.join(path, os.path.basename(os.environ.get('ORDER_FILEPATH')))
+    filepath = os.path.join(path, os.path.basename(
+        os.environ.get('ORDER_FILEPATH')))
     # write to file in JSON format
     collection.to_json_file(
         filepath, 'w',
@@ -65,7 +67,7 @@ def transform_order():
         indent=4)
 
 
-# Function to transform law embeddings
+# Create law embeddings
 def create_law_embeddings():
     from index.embeddings import LawEmbeddings
 
@@ -107,27 +109,33 @@ def create_investigation_embeddings():
     ).run()
 
 
-# Function to get relevant documents by query
-def get_relevant_documents_by_query(query: str):
-    from query.embeddings import load_vector_db, create_merger_retriever, get_relevant_documents
-    """
-    Get relevant documents by query.
-    """
+# Get relevant documents by query against law or investigation report
+def get_relevant_documents_by_query(
+        query: str,
+        target_name: str = 'law'):
+    from query.embeddings import QueryEmbeddings
+
     # check if query is empty or string
     if not isinstance(query, str):
         logger.error(f'Query is not a string: {query}')
         return "Please provide a query."
 
-    # load vector database from disk for taiwan law
-    law_vdb = load_vector_db(
+    if target_name == 'investigation':
+        collection_name = os.environ.get(
+            'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME')
+    else:
+        collection_name = os.environ.get(
+            'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME')
+
+    indexer = QueryEmbeddings(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'))
-    # merge vdbs into langchain_chromas
-    langchain_chromas = [law_vdb]
-    # create merger retriever
-    retriever = create_merger_retriever(langchain_chromas)
-    # get relevant documents
-    search_results = get_relevant_documents(retriever, query)
+        collection_name=collection_name)
+
+    # similarity search
+    search_results = indexer.similarity_search(query)
+
+    # get relevant documents by retriever
+    # search_results = indexer.as_retriever().get_relevant_documents(query)
 
     return search_results
 
@@ -147,7 +155,7 @@ def get_relevant_documents_by_website(site_link: str):
     # summarize documents
     summary_text = summary.summarization(documents)
 
-    return get_relevant_documents_by_query(summary_text)
+    return get_relevant_documents_by_query(query=summary_text)
 
 
 # Function to do retrieval QA
@@ -191,21 +199,26 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--transform-law-n-order',
                         action='store_true',
-                        help='Transform law and order data for embeddings')
+                        help='transform law and order data for creating embeddings')
     parser.add_argument('--create-law-embeddings',
                         action='store_true',
-                        help='Create law embeddings')
+                        help='create law embeddings')
     parser.add_argument('--create-order-embeddings',
                         action='store_true',
-                        help='Create order embeddings')
+                        help='create order embeddings')
     parser.add_argument('--create-investigation-embeddings',
                         action='store_true',
-                        help='Create investigation report embeddings')
+                        help='create investigation report embeddings')
     # get relevant documents by query
-    parser.add_argument('--query', type=str, help='Query string')
-    parser.add_argument('--qa', type=str, help='Query string by Retrieval QA')
+    parser.add_argument('--target-name',
+                        type=str,
+                        choices=['law', 'investigation'],
+                        default='law',
+                        help='query target name')
+    parser.add_argument('--query', type=str, help='query string')
+    parser.add_argument('--qa', type=str, help='query string by Retrieval QA')
     # get html text from a website
-    parser.add_argument('--crawler', type=str, help='Crawl a website')
+    parser.add_argument('--crawler', type=str, help='crawl a website')
 
     args = parser.parse_args()
 
@@ -219,7 +232,10 @@ if __name__ == '__main__':
     if args.create_investigation_embeddings:
         create_investigation_embeddings()
     if args.query:
-        search_results = get_relevant_documents_by_query(args.query)
+        search_results = get_relevant_documents_by_query(
+            query=args.query,
+            target_name=args.target_name,)
+        print('\n===== Relevant documents =====\n')
         print(search_results)
     if args.qa:
         search_results = retrieval_qa(args.qa)
