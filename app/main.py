@@ -109,16 +109,9 @@ def create_investigation_embeddings():
     ).run()
 
 
-# Get relevant documents by query against law or investigation report
-def get_relevant_documents_by_query(
-        query: str,
-        target_name: str = 'law'):
+# Return indexer base on target name
+def get_indexer(target_name: str):
     from query.embeddings import QueryEmbeddings
-
-    # check if query is empty or string
-    if not isinstance(query, str):
-        logger.error(f'Query is not a string: {query}')
-        return "Please provide a query."
 
     if target_name == 'investigation':
         collection_name = os.environ.get(
@@ -127,15 +120,30 @@ def get_relevant_documents_by_query(
         collection_name = os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME')
 
-    indexer = QueryEmbeddings(
+    return QueryEmbeddings(
         vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
         collection_name=collection_name)
+
+
+# Get relevant documents by query against law or investigation report
+def get_relevant_documents_by_query(
+        query: str,
+        target_name: str = 'law'):
+    # check if query is empty or string
+    if not isinstance(query, str):
+        logger.error(f'Query is not a string: {query}')
+        return "Please provide a query."
+
+    indexer = get_indexer(target_name)
 
     # similarity search
     # search_results = indexer.similarity_search(query)
 
     # get relevant documents by retriever
-    search_results = indexer.as_retriever().get_relevant_documents(query)
+    # search_results = indexer.as_retriever().get_relevant_documents(query)
+
+    # get relevant documents by multiquery retriever
+    search_results = indexer.as_multiquery_retriever().get_relevant_documents(query)
 
     return search_results
 
@@ -158,34 +166,27 @@ def get_relevant_documents_by_website(site_link: str):
     return get_relevant_documents_by_query(query=summary_text)
 
 
-# Function to do retrieval QA
-def retrieval_qa(query: str):
-    from query import embeddings, qa
+# QA against law or investigation report
+def retrieval_qa(
+        query: str,
+        target_name: str = 'law'):
+    from query import qa
     from util.openai import chatter
 
-    """
-    Retrieval QA.
-    """
     # check if query is empty or string
     if not isinstance(query, str):
         logger.error(f'Query is not a string: {query}')
         return "Please provide a query."
 
-    # load vector database from disk for taiwan law
-    law_vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'))
-    # merge vdbs into langchain_chromas
-    langchain_chromas = [law_vdb]
-    # create merger retriever
-    retriever = embeddings.create_merger_retriever(langchain_chromas)
+    indexer = get_indexer(target_name='law')
+
     # create retrieval qa
-    rqa = qa.create_retrieval_qa(
+    rqa = qa.EmbeddingsRetrievalQA(
         llm=chatter(),
-        retriever=retriever,
+        retriever=indexer.as_multiquery_retriever(),
         return_source_documents=True)
-    # get relevant documents
-    search_results = qa.query_by_retrieval_qa(rqa, query)
+
+    search_results = rqa.query({"query": query})
 
     return search_results
 
