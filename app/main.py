@@ -132,10 +132,10 @@ def get_relevant_documents_by_query(
         collection_name=collection_name)
 
     # similarity search
-    search_results = indexer.similarity_search(query)
+    # search_results = indexer.similarity_search(query)
 
     # get relevant documents by retriever
-    # search_results = indexer.as_retriever().get_relevant_documents(query)
+    search_results = indexer.as_retriever().get_relevant_documents(query)
 
     return search_results
 
