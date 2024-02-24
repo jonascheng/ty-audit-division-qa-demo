@@ -62,6 +62,7 @@ def calculate_embedding_cost(documents) -> (int, float):
     model_encoding = {
         'text-embedding-3-small': 'cl100k_base',
         'text-embedding-3-large': 'cl100k_base',
+        'text-search-davinci-doc-001': 'r50k_base',
     }
     # set default encoding name to None
     encoding_name = model_encoding.get(model_name, None)
@@ -75,9 +76,10 @@ def calculate_embedding_cost(documents) -> (int, float):
     model_price = {
         'text-embedding-3-small': 0.00002,
         'text-embedding-3-large': 0.00013,
+        'text-search-davinci-doc-001': 0.02,
     }
-    # set default price to 0.0001
-    price = model_price.get(model_name, 0.0001)
+    # set default price to 0.02
+    price = model_price.get(model_name, 0.02)
     logger.info(
         f'Using model {model_name}, encoding {enc.name}, price ${price:.5f} per 1000 tokens')
 
