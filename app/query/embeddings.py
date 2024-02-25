@@ -98,7 +98,8 @@ class QueryEmbeddings:
         # the data structure of search_results is
         # a list of SearchResult objects along with scores
         # search_results = self.store.similarity_search_with_score(query)
-        search_results = self.store.similarity_search_with_relevance_scores(query)
+        search_results = self.store.similarity_search_with_relevance_scores(
+            query)
         # search_results = self.store.similarity_search(query)
         logger.info(
             f'Found {len(search_results)} similar documents with query: {query}')
@@ -108,19 +109,19 @@ class QueryEmbeddings:
     # function to return retriever
     def as_retriever(
             self,
-            score_threshold: float = 0.5,
+            score_threshold: float = 0.2,
             top_k: int = 10) -> BaseRetriever:
         return self.store.as_retriever(
             search_type='similarity_score_threshold',
             search_kwargs={
                 "score_threshold": score_threshold,
-                "k": top_k,},
+                "k": top_k, },
         )
 
     # function to return multiquery retriever
     def as_multiquery_retriever(
             self,
-            score_threshold: float = 0.5,
+            score_threshold: float = 0.2,
             top_k: int = 10) -> BaseRetriever:
         from langchain.chains.llm import LLMChain
         from langchain.retrievers.multi_query import MultiQueryRetriever
@@ -150,7 +151,7 @@ class QueryEmbeddings:
                 search_type='similarity_score_threshold',
                 search_kwargs={
                     "score_threshold": score_threshold,
-                    "k": top_k,}),
+                    "k": top_k, }),
             # "lines" is the key (attribute name) of the parsed output
             parser_key="lines"
         )

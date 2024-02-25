@@ -28,28 +28,42 @@ def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
     return result_set
 
 
+# Return indexer base on target name
+def get_indexer(target_name: str):
+    from query.embeddings import QueryEmbeddings
+
+    if target_name == 'investigation':
+        collection_name = os.environ.get(
+            'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME')
+    else:
+        collection_name = os.environ.get(
+            'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME')
+
+    return QueryEmbeddings(
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        collection_name=collection_name)
+
+
 # Function for querying Taiwan law database
-def search_taiwan_law_db(
+def search_taiwan_law(
         prompt_input,
-        vector_db,
+        indexer,
         chat_history) -> str:
-    # merge vdbs into langchain_chromas
-    langchain_chromas = [vector_db]
-    # create merger retriever
-    retriever = embeddings.create_merger_retriever(langchain_chromas)
+    from query import qa
+    from util.openai import chatter
+
     # create retrieval qa
-    rqa = qa.create_conversational_retrieval_qa(
+    rqa = qa.EmbeddingsRetrievalQA(
         llm=chatter(),
-        # memory=chat_history,
-        retriever=retriever,
+        retriever=indexer.as_multiquery_retriever(),
         return_source_documents=True)
-    # get relevant documents
-    search_results = qa.query_by_conversational_retrieval_qa(
-        rqa,
-        prompt_input,)
-    # sources = ", ".join(search_results['source_documents'])
-    # return f"{search_results['answer']}\nsources: {sources}"
-    return search_results
+
+    search_results = rqa.query({"query": prompt_input})
+
+    return {
+        "answer": search_results['result'],
+        "source_documents": search_results['source_documents']
+    }
 
 
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')
@@ -69,9 +83,7 @@ if "messages" not in st.session_state.keys():
         memory_key='chat_history',
         return_messages=True)
     # load vector database from disk for taiwan law
-    st.session_state.vdb = embeddings.load_vector_db(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
-        collection_name=os.environ.get('EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'))
+    st.session_state.law_indexer = get_indexer('law')
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -97,9 +109,9 @@ if prompt := st.chat_input(placeholder="請輸入你的問題"):
 if not isinstance(st.session_state.messages[-1], AIMessage):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = search_taiwan_law_db(
+            response = search_taiwan_law(
                 prompt,
-                st.session_state.vdb,
+                st.session_state.law_indexer,
                 st.session_state.chat_history)
             st.write(response["answer"])
             for doc in response["source_documents"]:
