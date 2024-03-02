@@ -178,11 +178,15 @@ def retrieval_qa(
         logger.error(f'Query is not a string: {query}')
         return "Please provide a query."
 
-    indexer = get_indexer(target_name='law')
+    indexer = get_indexer(target_name=target_name)
+
+    # determin chain type by target name
+    chain_type = 'stuff' if target_name == 'law' else 'map_reduce'
 
     # create retrieval qa
     rqa = qa.EmbeddingsRetrievalQA(
         llm=chatter(),
+        chain_type=chain_type,
         retriever=indexer.as_multiquery_retriever(),
         return_source_documents=True)
 
@@ -239,7 +243,9 @@ if __name__ == '__main__':
         print('\n===== Relevant documents =====\n')
         print(search_results)
     if args.qa:
-        search_results = retrieval_qa(args.qa)
+        search_results = retrieval_qa(
+            query=args.qa,
+            target_name=args.target_name,)
         print(search_results)
     if args.crawler:
         search_results = get_relevant_documents_by_website(args.crawler)

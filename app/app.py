@@ -19,15 +19,6 @@ from util.openai import chatter, memory
 logger = logging.getLogger(__name__)
 
 
-# Function for querying Taiwan law database by use cases
-def search_taiwan_law_db_by_use_cases(prompt_input) -> str:
-    result_set = web.google_search(
-        prompt_input,
-        site_name='台灣全國法規資料庫 智慧查找案例',
-        site_link='https://law.moj.gov.tw/SmartSearch/Theme.aspx')
-    return result_set
-
-
 # Return indexer base on target name
 def get_indexer(target_name: str):
     from query.embeddings import QueryEmbeddings
@@ -45,16 +36,17 @@ def get_indexer(target_name: str):
 
 
 # Function for querying Taiwan law database
-def search_taiwan_law(
+def search_vector_store(
         prompt_input,
         indexer,
-        chat_history) -> str:
+        chain_type: str = 'stuff',) -> str:
     from query import qa
     from util.openai import chatter
 
     # create retrieval qa
     rqa = qa.EmbeddingsRetrievalQA(
         llm=chatter(),
+        chain_type=chain_type,
         retriever=indexer.as_multiquery_retriever(),
         return_source_documents=True)
 
@@ -66,61 +58,49 @@ def search_taiwan_law(
     }
 
 
+def handle_selectbox_change():
+    if st.session_state.target_name == const.APP_QUERY_TARGET_LAW:
+        if "law_indexer" not in st.session_state.keys():
+            st.session_state.law_indexer = get_indexer('law')
+    elif st.session_state.target_name == const.APP_QUERY_TARGET_INVESTIGATION:
+        if "investigation_indexer" not in st.session_state.keys():
+            st.session_state.investigation_indexer = get_indexer('investigation')
+
+
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')
 
 with st.sidebar:
     st.title(const.APP_TITLE)
-    st.write('Hello world!')
 
-# Store LLM generated responses
-if "messages" not in st.session_state.keys():
-    st.session_state.messages = [
-        SystemMessage(content="你是台灣審計部AI小助手，請以繁體中文回答審計人員提問"),
-        AIMessage(content="你好，我可以協助你關於台灣法規及相關案例檢索，有什麼可以協助你的嗎?")
-    ]
-    st.session_state.chat_history = memory(
-        llm=chatter(),
-        memory_key='chat_history',
-        return_messages=True)
-    # load vector database from disk for taiwan law
-    st.session_state.law_indexer = get_indexer('law')
+    # a drop down for selecting the query target vector store
+    target_name = st.selectbox(
+        "選擇查詢目標",
+        const.APP_QUERY_TARGETS,
+        index=None,
+        key='target_name',
+        on_change=handle_selectbox_change)
 
-# Display chat messages
-for message in st.session_state.messages:
-    if isinstance(message, AIMessage):
-        with st.chat_message("assistant"):
-            st.write(message.content)
-            if message.additional_kwargs:
-                for doc in message.additional_kwargs["source_documents"]:
-                    mention(
-                        label=f'{doc.metadata["law_name"]} {doc.metadata["law_article_chapter"]} {doc.metadata["law_article_no"]}',
-                        icon="📌",
-                        url=doc.metadata["source"],
-                    )
-    elif isinstance(message, HumanMessage):
-        st.chat_message("user").write(message.content)
+    # an input for the user to enter a query
+    query_input = st.text_input("輸入查詢", key='query_input')
 
-# User-provided prompt
-if prompt := st.chat_input(placeholder="請輸入你的問題"):
-    st.session_state.messages.append(HumanMessage(content=prompt))
-    st.chat_message("user").write(prompt)
+    # a button to submit the query
+    submit_button = st.button("送出查詢", key='submit_button')
 
-# Generate a new response if last message is not from assistant
-if not isinstance(st.session_state.messages[-1], AIMessage):
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            response = search_taiwan_law(
-                prompt,
-                st.session_state.law_indexer,
-                st.session_state.chat_history)
-            st.write(response["answer"])
-            for doc in response["source_documents"]:
-                mention(
-                    label=f'{doc.metadata["law_name"]} {doc.metadata["law_article_chapter"]} {doc.metadata["law_article_no"]}',
-                    icon="📌",
-                    url=doc.metadata["source"],
-                )
-    message = AIMessage(
-        content=response["answer"],
-        additional_kwargs={"source_documents": response["source_documents"]})
-    st.session_state.messages.append(message)
+# Check if button is clicked
+if submit_button:
+    if not target_name or not query_input:
+        st.error("請選擇查詢目標並輸入查詢")
+    else:
+        with st.spinner("檢索中..."):
+            if st.session_state.target_name == const.APP_QUERY_TARGET_LAW:
+                result_set = search_vector_store(
+                    prompt_input=query_input,
+                    indexer=st.session_state.law_indexer,
+                    chain_type='stuff')
+            else:
+                result_set = search_vector_store(
+                    prompt_input=query_input,
+                    indexer=st.session_state.investigation_indexer,
+                    chain_type='map_reduce')
+
+        st.write(result_set)

@@ -63,6 +63,9 @@ class EmbeddingsRetrievalQA:
             return_source_documents=return_source_documents,
             verbose=True)
 
+        logger.info(
+            f"EmbeddingsRetrievalQA: chain_type={chain_type}, return_source_documents={return_source_documents}")
+
     # function to query by retrieval qa
     def query(self, query: str) -> list[dict]:
         if not query:
