@@ -137,13 +137,13 @@ def get_relevant_documents_by_query(
     indexer = get_indexer(target_name)
 
     # similarity search
-    search_results = indexer.similarity_search(query)
+    # search_results = indexer.similarity_search(query)
 
     # get relevant documents by retriever
     # search_results = indexer.as_retriever().get_relevant_documents(query)
 
     # get relevant documents by multiquery retriever
-    # search_results = indexer.as_multiquery_retriever().get_relevant_documents(query)
+    search_results = indexer.as_multiquery_retriever().get_relevant_documents(query)
 
     return search_results
 

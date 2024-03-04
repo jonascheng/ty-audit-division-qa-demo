@@ -115,7 +115,7 @@ class QueryEmbeddings:
             search_type='similarity_score_threshold',
             search_kwargs={
                 "score_threshold": score_threshold,
-                "k": top_k, },
+                "k": top_k,},
         )
 
     # function to return multiquery retriever
@@ -143,7 +143,8 @@ class QueryEmbeddings:
         llm_chain = LLMChain(
             llm=llm,
             prompt=QUERY_PROMPT,
-            output_parser=output_parser)
+            output_parser=output_parser,
+            verbose=True,)
 
         return MultiQueryRetriever(
             llm_chain=llm_chain,
@@ -153,5 +154,5 @@ class QueryEmbeddings:
                     "score_threshold": score_threshold,
                     "k": top_k, }),
             # "lines" is the key (attribute name) of the parsed output
-            parser_key="lines"
-        )
+            parser_key="lines",
+            verbose=True,)
