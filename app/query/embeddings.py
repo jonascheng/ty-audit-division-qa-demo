@@ -54,7 +54,10 @@ class QueryEmbeddings:
             f'There are {self.store._collection.count()} in the collection {collection_name}')
 
     # function to query similar documents
-    def similarity_search(self, query: str) -> Union[str, List[dict]]:
+    def similarity_search(
+            self,
+            query: str,
+            score_threshold: float = 0.2) -> Union[str, List[dict]]:
         if not query:
             return "Please provide a query."
 
@@ -62,7 +65,8 @@ class QueryEmbeddings:
         # a list of SearchResult objects along with scores
         # search_results = self.store.similarity_search_with_score(query)
         search_results = self.store.similarity_search_with_relevance_scores(
-            query)
+            query,
+            score_threshold=score_threshold,)
         # search_results = self.store.similarity_search(query)
         logger.info(
             f'Found {len(search_results)} similar documents with query: {query}')
