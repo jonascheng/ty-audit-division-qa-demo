@@ -15,43 +15,6 @@ from util.openai import embedder, chatter
 logger = logging.getLogger(__name__)
 
 
-# function to load vector store with single collection from disk
-def load_vector_db(
-        vectorstore_filepath: str,
-        collection_name: str) -> Chroma:
-    """
-    Load the vector database from disk.
-    """
-    vdb = chromadb.PersistentClient(path=vectorstore_filepath)
-    # list collection names
-    collection_names = vdb.list_collections()
-    logger.info(f'Collection names: {collection_names}')
-
-    langchain_chroma = Chroma(
-        client=vdb,
-        collection_name=collection_name,
-        embedding_function=embedder())
-    logger.info(
-        f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
-
-    logger.info(f'Loaded vector database from {vectorstore_filepath}')
-
-    return langchain_chroma
-
-
-# function to create merger retriever
-def create_merger_retriever(
-        langchain_chromas: [],) -> MergerRetriever:
-    """
-    Create merger retriever.
-    """
-    return MergerRetriever(
-        retrievers=[
-            langchain_chroma.as_retriever(
-                search_kwargs={'k': 5})
-            for langchain_chroma in langchain_chromas])
-
-
 # Output parser will split the LLM result into a list of queries
 class LineList(BaseModel):
     # "lines" is the key (attribute name) of the parsed output
