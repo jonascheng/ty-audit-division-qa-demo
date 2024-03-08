@@ -128,7 +128,8 @@ def get_indexer(target_name: str):
 # Get relevant documents by query against law or investigation report
 def get_relevant_documents_by_query(
         query: str,
-        target_name: str = 'law'):
+        target_name: str = 'law',
+        method: str = 'similarity_search'):
     # check if query is empty or string
     if not isinstance(query, str):
         logger.error(f'Query is not a string: {query}')
@@ -137,13 +138,16 @@ def get_relevant_documents_by_query(
     indexer = get_indexer(target_name)
 
     # similarity search
-    # search_results = indexer.similarity_search(query)
-
+    if method == 'similarity_search':
+        search_results = indexer.similarity_search(query)
     # get relevant documents by retriever
-    # search_results = indexer.as_retriever().get_relevant_documents(query)
-
-    # get relevant documents by multiquery retriever
-    search_results = indexer.as_multiquery_retriever().get_relevant_documents(query)
+    elif method == 'simple_query':
+        retriever = indexer.as_retriever()
+        search_results = retriever.invoke(query)
+    # elif method == 'multi_query':
+    else:
+        retriever = indexer.as_multiquery_retriever()
+        search_results = retriever.invoke(query)
 
     return search_results
 
@@ -220,6 +224,14 @@ if __name__ == '__main__':
                         choices=['law', 'investigation'],
                         default='law',
                         help='query target name')
+    parser.add_argument('--method',
+                        type=str,
+                        choices=[
+                            'similarity_search',
+                            'simple_query',
+                            'multi_query'],
+                        default='similarity_search',
+                        help='query method')
     parser.add_argument('--query', type=str, help='query string')
     parser.add_argument('--qa', type=str, help='query string by Retrieval QA')
     # get html text from a website
@@ -239,7 +251,8 @@ if __name__ == '__main__':
     if args.query:
         search_results = get_relevant_documents_by_query(
             query=args.query,
-            target_name=args.target_name,)
+            target_name=args.target_name,
+            method=args.method,)
         print('\n===== Relevant documents =====\n')
         print(search_results)
     if args.qa:
