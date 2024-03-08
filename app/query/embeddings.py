@@ -2,8 +2,6 @@ import logging
 from typing import Union, List
 from langchain_core.retrievers import BaseRetriever
 
-from langchain.prompts import PromptTemplate
-
 from util.openai import embedder, chatter
 
 # Get logger
@@ -70,7 +68,7 @@ class QueryEmbeddings:
             self,
             score_threshold: float = 0.3,
             top_k: int = 10) -> BaseRetriever:
-        from langchain.chains.llm import LLMChain
+        from langchain.prompts import PromptTemplate
         from langchain.retrievers.multi_query import MultiQueryRetriever
 
         # (Tailored from MultiQueryRetriever) Default prompt

@@ -52,19 +52,43 @@ class EmbeddingsRetrievalQA:
             retriever: BaseRetriever,
             chain_type: str = 'stuff',
             return_source_documents: bool = False):
+        from util import stuff_prompt, map_reduce_prompt
+
         self.llm = llm
         self.retriever = retriever
         self.chain_type = chain_type
         self.return_source_documents = return_source_documents
+
+        logger.info(
+            f"EmbeddingsRetrievalQA: chain_type={chain_type}, return_source_documents={return_source_documents}")
+
+        chain_type_kwargs = {
+            'verbose': True
+        }
+
+        if chain_type == 'map_reduce':
+            question_prompt = map_reduce_prompt.QUESTION_PROMPT_SELECTOR.get_prompt(llm)
+            combine_prompt = map_reduce_prompt.COMBINE_PROMPT_SELECTOR.get_prompt(llm)
+            chain_type_kwargs = {
+                'question_prompt': question_prompt,
+                'combine_prompt': combine_prompt,
+                'verbose': True}
+            logger.info(
+                f"EmbeddingsRetrievalQA:\nquestion_prompt={question_prompt},\ncombine_prompt={combine_prompt}")
+        elif chain_type == 'stuff':
+            prompt = stuff_prompt.PROMPT_SELECTOR.get_prompt(llm)
+            chain_type_kwargs = {
+                'prompt': prompt,
+                'verbose': True}
+            logger.info(f"EmbeddingsRetrievalQA:\nprompt={prompt}")
+
         self.qa = RetrievalQA.from_chain_type(
             llm=llm,
             retriever=retriever,
             chain_type=chain_type,
+            chain_type_kwargs=chain_type_kwargs,
             return_source_documents=return_source_documents,
             verbose=True)
-
-        logger.info(
-            f"EmbeddingsRetrievalQA: chain_type={chain_type}, return_source_documents={return_source_documents}")
 
     # function to query by retrieval qa
     def query(self, query: str) -> list[dict]:
