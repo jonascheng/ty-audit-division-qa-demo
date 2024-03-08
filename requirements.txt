@@ -16,6 +16,8 @@ unstructured[all-docs]
 # streamlit
 streamlit
 streamlit_extras
+streamlit-authenticator
+validators
 watchdog
 # tools
 # googlesearch-python
