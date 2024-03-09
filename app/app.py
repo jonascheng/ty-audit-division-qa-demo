@@ -78,6 +78,9 @@ def login():
     with st.sidebar:
         st.title(const.APP_TITLE)
 
+        authenticator.logout()
+        st.write(f'Welcome *{st.session_state["name"]}*')
+
         # a drop down for selecting the query target vector store
         target_name = st.selectbox(
             "選擇查詢目標",
