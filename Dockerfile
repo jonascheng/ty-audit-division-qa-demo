@@ -8,7 +8,7 @@ WORKDIR /streamlit
 COPY requirements.txt /tmp
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install --no-cache-dir --use-deprecated=legacy-resolver -r /tmp/requirements.txt
 
 # Copy the current directory contents into the container at /streamlit
 COPY . /streamlit
