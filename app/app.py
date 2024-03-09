@@ -100,6 +100,7 @@ def login():
         if not target_name or not query_input:
             st.error("請選擇查詢目標並輸入查詢")
         else:
+            st.write(f"{query_input}")
             with st.spinner("檢索中..."):
                 if st.session_state.target_name == const.APP_QUERY_TARGET_LAW:
                     result_set = search_vector_store(
@@ -136,7 +137,10 @@ def login():
                 content = source_document.page_content
                 # remove all new lines from the content
                 content = content.replace('\n', ' ')
-                st.write(f"      {content} (省略部分內容...)")
+                st.markdown(
+                    f"<small>      {content} (省略部分內容...)</small>",
+                    unsafe_allow_html=True)
+                # st.write(f"      {content} (省略部分內容...)")
 
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')
 

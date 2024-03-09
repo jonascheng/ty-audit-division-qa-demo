@@ -40,6 +40,10 @@ docker-build: ## build docker image
 docker-push: docker-build ## push docker image
 	${DOCKER} push ${DOCKER_IMG_NAME}:${COMMIT_SHA}
 
+.PHONY: docker-run
+docker-run: ## run docker image
+	${DOCKER} run -d --name tyaudit-app --restart unless-stopped -p 8501:8501 ${DOCKER_IMG_NAME}:${COMMIT_SHA}
+
 .PHONY: help
 help: ## prints this help message
 	@echo "Usage: \n"
