@@ -62,7 +62,7 @@ QUESTION_PROMPT_SELECTOR = ConditionalPromptSelector(
 # =========
 # FINAL ANSWER:"""
 combine_prompt_template = """請根據資料庫查檢索獲得的摘要文件以中文回答問題．
-如果你不知道答案，請說你無法根據資料庫檢索獲得的摘要文件回答任何相關信息．請勿捏造答案．
+如果摘要文件不足以提供你回答，請說你無法根據資料庫檢索獲得的摘要文件回答任何相關信息．請勿捏造答案．
 
 QUESTION: Which state/country's law governs the interpretation of the contract?
 =========
@@ -101,7 +101,7 @@ COMBINE_PROMPT = PromptTemplate(
 # ______________________
 # {summaries}"""
 system_template = """請根據資料庫查檢索獲得的摘要文件以中文回答問題．
-如果你不知道答案，請說你無法根據資料庫檢索獲得的摘要文件回答任何相關信息．請勿捏造答案．
+如果摘要文件不足以提供你回答，請說你無法根據資料庫檢索獲得的摘要文件回答任何相關信息．請勿捏造答案．
 ______________________
 {summaries}"""
 messages = [
