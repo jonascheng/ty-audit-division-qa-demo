@@ -1,3 +1,13 @@
 [theme]
 base="dark"
 primaryColor="purple"
+
+[server]
+# Automatically rerun script when the file is modified on disk.
+# Default: false
+runOnSave = true
+
+[browser]
+# Whether to send usage statistics to Streamlit.
+# Default: true
+gatherUsageStats = false

@@ -1,7 +1,6 @@
 import os
 import logging
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from langchain_openai.llms import OpenAI, AzureOpenAI
+from typing import List
 
 # Get logger
 logger = logging.getLogger(__name__)
@@ -13,6 +12,8 @@ def embedder():
 
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
+        logger.debug(
+            f'Creating OpenAIEmbeddings with model {os.environ.get("OPENAI_EMBEDDING_MODEL")}')
         return OpenAIEmbeddings(
             model=os.environ.get('OPENAI_EMBEDDING_MODEL'),
             retry_min_seconds=60,
@@ -20,6 +21,8 @@ def embedder():
             max_retries=10)
     # if azure type
     if os.environ.get('OPENAI_API_TYPE') == 'azure':
+        logger.debug(
+            f'Creating AzureOpenAIEmbeddings with model {os.environ.get("OPENAI_EMBEDDING_MODEL")}')
         return AzureOpenAIEmbeddings(
             azure_deployment=os.environ.get('AZURE_EMBEDDING_DEPLOYMENT'),
             model=os.environ.get('OPENAI_EMBEDDING_MODEL'),
@@ -33,9 +36,9 @@ def embedder():
 # split documents into chunks function
 def text_splitter(
         documents,
-        chunk_size=900,
-        chunk_overlap=0,
-        separators=[r"\s+", "。", "　", "＞"],):
+        chunk_size: int = 900,
+        chunk_overlap: int = 0,
+        separators: List[str] = None,):
     from langchain.text_splitter import RecursiveCharacterTextSplitter
 
     text_splitter = RecursiveCharacterTextSplitter(
@@ -59,6 +62,7 @@ def calculate_embedding_cost(documents) -> (int, float):
     model_encoding = {
         'text-embedding-3-small': 'cl100k_base',
         'text-embedding-3-large': 'cl100k_base',
+        'text-search-davinci-doc-001': 'r50k_base',
     }
     # set default encoding name to None
     encoding_name = model_encoding.get(model_name, None)
@@ -72,18 +76,23 @@ def calculate_embedding_cost(documents) -> (int, float):
     model_price = {
         'text-embedding-3-small': 0.00002,
         'text-embedding-3-large': 0.00013,
+        'text-search-davinci-doc-001': 0.02,
     }
-    # set default price to 0.0001
-    price = model_price.get(model_name, 0.0001)
-    logger.info(f'Using model {model_name}, encoding {enc.name}, price ${price:.5f} per 1000 tokens')
+    # set default price to 0.02
+    price = model_price.get(model_name, 0.02)
+    logger.info(
+        f'Using model {model_name}, encoding {enc.name}, price ${price:.5f} per 1000 tokens')
 
-    total_tokens = sum([len(enc.encode(page.page_content)) for page in documents])
+    total_tokens = sum([len(enc.encode(page.page_content))
+                       for page in documents])
 
     return total_tokens, total_tokens / 1000 * price
 
 
 # llm function
 def llm():
+    from langchain_openai.llms import OpenAI, AzureOpenAI
+
     temperature = 0
     frequency_penalty = 0.2
     # if not azure type
@@ -110,14 +119,14 @@ def llm():
 
 # chat function
 def chatter():
+    from langchain_openai import ChatOpenAI, AzureChatOpenAI
+
     temperature = 0
-    max_tokens = 256
     # if not azure type
     if os.environ.get('OPENAI_API_TYPE') != 'azure':
         return ChatOpenAI(
             model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=temperature,
-            max_tokens=max_tokens,
             max_retries=10,
             verbose=True)
     # if azure type
@@ -126,9 +135,23 @@ def chatter():
             deployment_name=os.environ.get('AZURE_CHAT_DEPLOYMENT'),
             model=os.environ.get('OPENAI_CHAT_MODEL'),
             temperature=temperature,
-            max_tokens=max_tokens,
             azure_endpoint=os.environ.get('AZURE_OPENAI_ENDPOINT'),
             openai_api_type=os.environ.get('OPENAI_API_TYPE'),
             api_version=os.environ.get('OPENAI_API_VERSION'),
             api_key=os.environ.get('OPENAI_API_KEY'),
             verbose=True)
+
+
+# memory function
+def memory(
+        llm,
+        memory_key: str = 'chat_history',
+        return_messages: bool = False,
+):
+    from langchain.memory import ConversationSummaryBufferMemory
+
+    return ConversationSummaryBufferMemory(
+        llm=llm,
+        memory_key=memory_key,
+        return_messages=return_messages,
+        verbose=True)

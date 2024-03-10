@@ -1,7 +1,6 @@
 python-dotenv
 dataclass_wizard
 jq
-tiktoken
 tqdm
 # openai, langchain
 openai
@@ -12,8 +11,13 @@ langchain-core
 langchain-experimental
 langchainhub
 chromadb
+tiktoken
+unstructured[all-docs]
 # streamlit
 streamlit
+streamlit_extras
+streamlit-authenticator
+validators
 watchdog
 # tools
 # googlesearch-python

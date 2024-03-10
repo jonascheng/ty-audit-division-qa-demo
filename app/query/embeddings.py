@@ -1,109 +1,94 @@
 import logging
-import chromadb
-from langchain_community.vectorstores import Chroma
+from typing import Union, List
 from langchain_core.retrievers import BaseRetriever
-from langchain.retrievers import MergerRetriever
 
-from util.openai import embedder
-
+from util.openai import embedder, chatter
 
 # Get logger
 logger = logging.getLogger(__name__)
 
 
-# function to load vector store with single collection from disk
-def load_vector_db(
-        vectorstore_filepath: str,
-        collection_name: str) -> Chroma:
-    """
-    Load the vector database from disk.
-    """
-    vdb = chromadb.PersistentClient(path=vectorstore_filepath)
-    # list collection names
-    collection_names = vdb.list_collections()
-    logger.info(f'Collection names: {collection_names}')
+# A class to query embeddings
+class QueryEmbeddings:
+    def __init__(
+            self,
+            vectorstore_filepath: str,
+            collection_name: str):
+        import chromadb
+        from langchain_community.vectorstores import Chroma
 
-    langchain_chroma = Chroma(
-        client=vdb,
-        collection_name=collection_name,
-        embedding_function=embedder())
-    logger.info(f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
+        # load vector store with single collection from disk
+        self.vdb = chromadb.PersistentClient(
+            path=vectorstore_filepath)
+        # list collection names
+        collection_names = self.vdb.list_collections()
+        logger.debug(f'Collection names: {collection_names}')
 
-    logger.info(f'Loaded vector database from {vectorstore_filepath}')
-
-    return langchain_chroma
-
-
-# function to load multiple vectore store from disk
-def load_multiple_vector_db(
-        vectorstore_filepath: str,
-        collection_name_prefix: str = 'law',
-        collection_partition_size: int = 4) -> []:
-    """
-    Load the vector database from disk.
-    """
-    vdb = chromadb.PersistentClient(path=vectorstore_filepath)
-    # list collection names
-    collection_names = vdb.list_collections()
-    logger.info(f'Collection names: {collection_names}')
-
-    langchain_chromas = []
-    for i in range(collection_partition_size):
-        collection_name = f'{collection_name_prefix}_{i}'
-        # check if collection exists
-        # vdb.get_collection(name=collection_name)
-        langchain_chroma = Chroma(
-            client=vdb,
+        self.store = Chroma(
+            client=self.vdb,
             collection_name=collection_name,
             embedding_function=embedder())
-        logger.info(f'There are {langchain_chroma._collection.count()} in the collection {collection_name}')
-        langchain_chromas.append(langchain_chroma)
+        logger.info(
+            f'There are {self.store._collection.count()} in the collection {collection_name}')
 
-    logger.info(f'Loaded vector database from {vectorstore_filepath}')
+    # function to query similar documents
+    def similarity_search(
+            self,
+            query: str,
+            score_threshold: float = 0.3) -> Union[str, List[dict]]:
+        if not query:
+            return "Please provide a query."
 
-    return langchain_chromas
+        # the data structure of search_results is
+        # a list of SearchResult objects along with scores
+        # search_results = self.store.similarity_search_with_score(query)
+        search_results = self.store.similarity_search_with_relevance_scores(
+            query,
+            score_threshold=score_threshold,)
+        # search_results = self.store.similarity_search(query)
+        logger.info(
+            f'Found {len(search_results)} similar documents with query: {query}')
 
+        return search_results
 
-# function to query similar documents
-def similarity_search(langchain_chromas: [], query: str) -> []:
-    """
-    Query similar documents by Chromas.
-    """
-    if not query:
-        return "Please provide a query."
+    # function to return retriever
+    def as_retriever(
+            self,
+            score_threshold: float = 0.3,
+            top_k: int = 10) -> BaseRetriever:
+        return self.store.as_retriever(
+            search_type='similarity_score_threshold',
+            search_kwargs={
+                "score_threshold": score_threshold,
+                "k": top_k,},
+        )
 
-    # the data structure of search_results is
-    # a list of SearchResult objects
-    search_results = []
-    for langchain_chroma in langchain_chromas:
-        search_results.append(langchain_chroma.similarity_search(query))
+    # function to return multiquery retriever
+    def as_multiquery_retriever(
+            self,
+            score_threshold: float = 0.3,
+            top_k: int = 10) -> BaseRetriever:
+        from langchain.prompts import PromptTemplate
+        from langchain.retrievers.multi_query import MultiQueryRetriever
 
-    return search_results
+        # (Tailored from MultiQueryRetriever) Default prompt
+        DEFAULT_QUERY_PROMPT = PromptTemplate(
+            input_variables=["question"],
+            template="""You are an AI language model assistant. Your task is to generate 5
+            different versions of the given user question to retrieve relevant documents from a vector
+            database. By generating multiple perspectives on the user question, your goal is to help
+            the user overcome some of the limitations of the distance-based similarity search.
+            Provide these alternative questions in Traditional Chinese and separated by newlines.
+            Original question: {question}""",
+        )
 
+        llm = chatter()
 
-# function to create merger retriever
-def create_merger_retriever(langchain_chromas: []) -> MergerRetriever:
-    """
-    Create merger retriever.
-    """
-    return MergerRetriever(
-        retrievers=[
-            langchain_chroma.as_retriever(
-                search_kwargs={'k': 3})
-            for langchain_chroma in langchain_chromas])
-
-
-def get_relevant_documents(retriever: BaseRetriever, query: str) -> list[dict]:
-    """
-    Get relevant documents by retriever.
-    """
-    if not query:
-        return "Please provide a query."
-
-    # the data structure of search_results is
-    # a list of Document objects
-    search_results = retriever.get_relevant_documents(query)
-
-    logger.info(f'Found {len(search_results)} relevant documents')
-
-    return search_results
+        return MultiQueryRetriever.from_llm(
+            retriever=self.store.as_retriever(
+                search_type='similarity_score_threshold',
+                search_kwargs={
+                    "score_threshold": score_threshold,
+                    "k": top_k, }),
+            llm=llm,
+            prompt=DEFAULT_QUERY_PROMPT,)

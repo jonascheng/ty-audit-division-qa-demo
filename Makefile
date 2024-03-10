@@ -22,13 +22,15 @@ run: setup ## run
 
 .PHONY: law-embeddings
 law-embeddings: setup ## create law embeddings
-	rm -rf assets/law.json/ChLaw_embeddings.chorma
-	python app/main.py --transform-law-embeddings
+	python app/main.py --create-law-embeddings
 
 .PHONY: order-embeddings
 order-embeddings: setup ## create order embeddings
-	rm -rf assets/order.json/ChOrder_embeddings.chorma
-	python app/main.py --transform-order-embeddings
+	python app/main.py --create-order-embeddings
+
+.PHONY: investigation-embeddings
+investigation-embeddings: setup ## create investigation report embeddings
+	python app/main.py --create-investigation-embeddings
 
 .PHONY: docker-build
 docker-build: ## build docker image
@@ -37,6 +39,10 @@ docker-build: ## build docker image
 .PHONY: docker-push
 docker-push: docker-build ## push docker image
 	${DOCKER} push ${DOCKER_IMG_NAME}:${COMMIT_SHA}
+
+.PHONY: docker-run
+docker-run: ## run docker image
+	${DOCKER} run -d --name tyaudit-app --restart unless-stopped -p 80:8501 -p 443:8501 ${DOCKER_IMG_NAME}:${COMMIT_SHA}
 
 .PHONY: help
 help: ## prints this help message
