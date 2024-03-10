@@ -185,7 +185,7 @@ def retrieval_qa(
     indexer = get_indexer(target_name=target_name)
 
     # determin chain type by target name
-    chain_type = 'stuff' if target_name == 'law' else 'map_reduce'
+    chain_type = 'stuff' if target_name == 'law' else 'refine'
 
     # create retrieval qa
     rqa = qa.EmbeddingsRetrievalQA(

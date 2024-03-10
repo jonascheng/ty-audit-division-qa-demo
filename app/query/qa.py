@@ -52,7 +52,7 @@ class EmbeddingsRetrievalQA:
             retriever: BaseRetriever,
             chain_type: str = 'stuff',
             return_source_documents: bool = False):
-        from util import stuff_prompt, map_reduce_prompt
+        from util import stuff_prompt, map_reduce_prompt, refine_prompt
 
         self.llm = llm
         self.retriever = retriever
@@ -75,6 +75,15 @@ class EmbeddingsRetrievalQA:
                 'verbose': True}
             logger.info(
                 f"EmbeddingsRetrievalQA:\nquestion_prompt={question_prompt},\ncombine_prompt={combine_prompt}")
+        elif chain_type == 'refine':
+            question_prompt = refine_prompt.QUESTION_PROMPT_SELECTOR.get_prompt(llm)
+            refine_prompt = refine_prompt.REFINE_PROMPT_SELECTOR.get_prompt(llm)
+            chain_type_kwargs = {
+                'question_prompt': question_prompt,
+                'refine_prompt': refine_prompt,
+                'verbose': True}
+            logger.info(
+                f"EmbeddingsRetrievalQA:\nquestion_prompt={question_prompt},\nrefine_prompt={refine_prompt}")
         elif chain_type == 'stuff':
             prompt = stuff_prompt.PROMPT_SELECTOR.get_prompt(llm)
             chain_type_kwargs = {

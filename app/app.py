@@ -101,18 +101,23 @@ def login():
         else:
             st.write(f"{query_input}")
             with st.spinner("檢索中..."):
-                if st.session_state.target_name == const.APP_QUERY_TARGET_LAW:
-                    result_set = search_vector_store(
-                        prompt_input=query_input,
-                        indexer=st.session_state.law_indexer,
-                        top_k=10,
-                        chain_type='stuff')
-                else:
-                    result_set = search_vector_store(
-                        prompt_input=query_input,
-                        indexer=st.session_state.investigation_indexer,
-                        top_k=5,
-                        chain_type='map_reduce')
+                try:
+                    if st.session_state.target_name == const.APP_QUERY_TARGET_LAW:
+                        result_set = search_vector_store(
+                            prompt_input=query_input,
+                            indexer=st.session_state.law_indexer,
+                            top_k=10,
+                            chain_type='stuff')
+                    else:
+                        result_set = search_vector_store(
+                            prompt_input=query_input,
+                            indexer=st.session_state.investigation_indexer,
+                            top_k=5,
+                            chain_type='refine')
+                except Exception as e:
+                    logger.error(f"Error: {e}")
+                    st.error("檢索失敗，很可能無相關資料，或嘗試不同提問方式")
+                    return
 
             # st.write(result_set)
 

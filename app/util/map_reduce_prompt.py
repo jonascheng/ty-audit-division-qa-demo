@@ -31,7 +31,7 @@ QUESTION_PROMPT_SELECTOR = ConditionalPromptSelector(
 )
 
 # combine_prompt_template = """Given the following extracted parts of a long document and a question, create a final answer in Traditional Chinese.
-# If you don't know the answer, just say that 'you can't retrieve any related information' in Traditional Chinese.
+# If you don't know the answer, just say that 'you can't retrieve any related information in Traditional Chinese.
 # Don't try to make up an answer.
 
 # QUESTION: Which state/country's law governs the interpretation of the contract?
@@ -61,7 +61,7 @@ QUESTION_PROMPT_SELECTOR = ConditionalPromptSelector(
 # {summaries}
 # =========
 # FINAL ANSWER:"""
-combine_prompt_template = """請根據資料庫查檢索獲得的摘要文件以中文回答問題．
+combine_prompt_template = """請根據資料庫檢索獲得的摘要文件以中文回答問題．
 如果摘要文件不足以提供你回答，請說你無法根據資料庫檢索獲得的摘要文件回答任何相關信息．請勿捏造答案．
 
 QUESTION: Which state/country's law governs the interpretation of the contract?
@@ -96,11 +96,11 @@ COMBINE_PROMPT = PromptTemplate(
 )
 
 # system_template = """Given the following extracted parts of a long document and a question, create a final answer in Traditional Chinese.
-# If you don't know the answer, just say that 'you can't retrieve any related information' in Traditional Chinese.
+# If you don't know the answer, just say that 'you can't retrieve any related information in Traditional Chinese.
 # Don't try to make up an answer.
 # ______________________
 # {summaries}"""
-system_template = """請根據資料庫查檢索獲得的摘要文件以中文回答問題．
+system_template = """請根據資料庫檢索獲得的摘要文件以中文回答問題．
 如果摘要文件不足以提供你回答，請說你無法根據資料庫檢索獲得的摘要文件回答任何相關信息．請勿捏造答案．
 ______________________
 {summaries}"""
