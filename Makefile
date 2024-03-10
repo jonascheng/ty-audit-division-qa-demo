@@ -42,7 +42,7 @@ docker-push: docker-build ## push docker image
 
 .PHONY: docker-run
 docker-run: ## run docker image
-	${DOCKER} run -d --name tyaudit-app --restart unless-stopped -p 8501:8501 ${DOCKER_IMG_NAME}:${COMMIT_SHA}
+	${DOCKER} run -d --name tyaudit-app --restart unless-stopped -p 80:8501 -p 443:8501 ${DOCKER_IMG_NAME}:${COMMIT_SHA}
 
 .PHONY: help
 help: ## prints this help message

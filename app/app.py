@@ -78,7 +78,6 @@ def login():
     with st.sidebar:
         st.title(const.APP_TITLE)
 
-        authenticator.logout()
         st.write(f'Welcome *{st.session_state["name"]}*')
 
         # a drop down for selecting the query target vector store
@@ -142,6 +141,7 @@ def login():
                     unsafe_allow_html=True)
                 # st.write(f"      {content} (省略部分內容...)")
 
+
 st.set_page_config(page_title=const.APP_TITLE, page_icon='💬')
 
 # authenticate user
@@ -156,11 +156,22 @@ authenticator = stauth.Authenticate(
     config['preauthorized']
 )
 
-name, authentication_status, username = authenticator.login()
+name, authentication_status, username = authenticator.login(
+    fields={
+        'Form name': '登入',
+        'Username': '用戶名',
+        'Password': '密碼',
+        'Login': '登入',
+    },
+)
 
 if authentication_status == False:
-    st.error('Username/password is incorrect')
+    st.error('用戶名或密碼錯誤')
 elif authentication_status == None:
-    st.warning('Please enter your username and password')
+    st.warning('請輸入用戶名和密碼')
 else:
+    # somehow this doesn't work in docker
+    # authenticator.logout(
+    #     location='sidebar',
+    # )
     login()

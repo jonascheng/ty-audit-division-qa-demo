@@ -17,4 +17,4 @@ COPY . /streamlit
 EXPOSE 8501
 
 # Run app.py when the container launches
-CMD ["streamlit", "run", "app/app.py"]
+CMD ["streamlit", "run", "app/app.py", "--server.address=0.0.0.0"]
