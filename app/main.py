@@ -22,7 +22,7 @@ def transform_law():
 
     collection = transformer(
         data,
-        allowed_category=['衛生福利部＞食品藥物管理目'])
+        allowed_category=['行政＞衛生福利部', '行政＞農業部'])
     logger.info(f'Transformed {len(collection.data)} records')
 
     # get output path from env 'LAW_TRANSFORMED_PATH'
@@ -50,7 +50,7 @@ def transform_order():
 
     collection = transformer(
         data,
-        allowed_category=['衛生福利部＞食品藥物管理目'])
+        allowed_category=['行政＞衛生福利部', '行政＞農業部'])
     logger.info(f'Transformed {len(collection.data)} records')
 
     # get output file path from env 'ORDER_TRANSFORMED_PATH'
