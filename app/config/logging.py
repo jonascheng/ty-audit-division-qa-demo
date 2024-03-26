@@ -17,12 +17,12 @@ LOGGING_CONFIG = {
     "loggers": {
         "langchain": {
             "handlers": ["stdout"],
-            "level": "INFO",
+            "level": "ERROR",
             "propagate": False
         },
         "langchain_openai": {
             "handlers": ["stdout"],
-            "level": "INFO",
+            "level": "ERROR",
             "propagate": False
         },
         "assets": {
