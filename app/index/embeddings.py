@@ -276,7 +276,7 @@ class InvestigationReportEmbeddings(Embeddings):
         # only load .doc file into a list of Document objects
         loader = DirectoryLoader(
             self.src_filepath,
-            glob="*.doc",
+            glob="*.doc*",
             loader_cls=UnstructuredWordDocumentLoader,
             show_progress=True,)
         return loader.load()
