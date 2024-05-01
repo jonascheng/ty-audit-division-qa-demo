@@ -1,8 +1,10 @@
 # base on the official image of python 3.10
-FROM python:3.10
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /streamlit
+
+RUN apt-get update --fix-missing && apt-get install -y --fix-missing build-essential
 
 # Copy the requirements file into the container at /tmp
 COPY requirements.txt /tmp
