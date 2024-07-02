@@ -2,6 +2,7 @@ python-dotenv
 dataclass_wizard
 jq
 tqdm
+psutil
 # openai, langchain
 openai
 langchain

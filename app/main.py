@@ -101,9 +101,23 @@ def create_investigation_embeddings():
 
     InvestigationReportEmbeddings(
         os.environ.get('INVESTIGATION_REPORTS_PATH'),
-        os.environ.get('EMBEDDINGS_FILEPATH'),
+        os.environ.get('EMBEDDINGS_INVESTIGATION_REPORTS_FILEPATH'),
         collection_name=os.environ.get(
             'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME'),
+        chunk_size=800,
+        chunk_overlap=100
+    ).run()
+
+
+# Create news embeddings
+def create_news_embeddings():
+    from index.embeddings import NewsEmbeddings
+
+    NewsEmbeddings(
+        os.environ.get('NEWS_PATH'),
+        os.environ.get('EMBEDDINGS_NEWS_FILEPATH'),
+        collection_name=os.environ.get(
+            'EMBEDDINGS_NEWS_COLLECTION_NAME'),
         chunk_size=800,
         chunk_overlap=100
     ).run()
@@ -218,6 +232,9 @@ if __name__ == '__main__':
     parser.add_argument('--create-investigation-embeddings',
                         action='store_true',
                         help='create investigation report embeddings')
+    parser.add_argument('--create-news-embeddings',
+                        action='store_true',
+                        help='create news embeddings')
     # get relevant documents by query
     parser.add_argument('--target-name',
                         type=str,
@@ -248,6 +265,8 @@ if __name__ == '__main__':
         create_order_embeddings()
     if args.create_investigation_embeddings:
         create_investigation_embeddings()
+    if args.create_news_embeddings:
+        create_news_embeddings()
     if args.query:
         search_results = get_relevant_documents_by_query(
             query=args.query,

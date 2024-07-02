@@ -32,6 +32,10 @@ order-embeddings: setup ## create order embeddings
 investigation-embeddings: setup ## create investigation report embeddings
 	python app/main.py --create-investigation-embeddings
 
+.PHONY: news-embeddings
+news-embeddings: setup ## create news embeddings
+	python app/main.py --create-news-embeddings
+
 .PHONY: docker-build
 docker-build: ## build docker image
 	${DOCKER} build -t ${DOCKER_IMG_NAME}:${COMMIT_SHA} .

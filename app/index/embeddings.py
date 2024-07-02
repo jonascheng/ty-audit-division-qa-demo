@@ -288,3 +288,30 @@ class InvestigationReportEmbeddings(Embeddings):
             self.chunk_size,
             self.chunk_overlap,
             separators=["\n\n", "\n", "。", "："])
+
+
+# A class to create embeddings for news in doc format
+class NewsEmbeddings(Embeddings):
+    # custom function to load documents from source filepath
+    def _loader(self) -> list:
+        from langchain_community.document_loaders import (
+            DirectoryLoader,
+            UnstructuredWordDocumentLoader
+        )
+
+        # enumerate the source filepath, and
+        # only load .doc file into a list of Document objects
+        loader = DirectoryLoader(
+            self.src_filepath,
+            glob="*.doc*",
+            loader_cls=UnstructuredWordDocumentLoader,
+            show_progress=True,)
+        return loader.load()
+
+    # custom function to split documents into chunked documents
+    def _splitter(self, documents: list) -> list:
+        return text_splitter(
+            documents,
+            self.chunk_size,
+            self.chunk_overlap,
+            separators=["\n\n", "\n", "。", "："])
