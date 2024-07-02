@@ -35,7 +35,7 @@ def get_indexer(target_name: str):
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME')
 
     return QueryEmbeddings(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        vectorstore_filepath=os.environ.get('EMBEDDINGS_TAIWAN_LAW_FILEPATH'),
         collection_name=collection_name)
 
 

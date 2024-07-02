@@ -73,7 +73,7 @@ def create_law_embeddings():
 
     LawEmbeddings(
         os.environ.get('LAW_TRANSFORMED_PATH'),
-        os.environ.get('EMBEDDINGS_FILEPATH'),
+        os.environ.get('EMBEDDINGS_TAIWAN_LAW_FILEPATH'),
         collection_name=os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
@@ -87,7 +87,7 @@ def create_order_embeddings():
 
     LawEmbeddings(
         os.environ.get('ORDER_TRANSFORMED_PATH'),
-        os.environ.get('EMBEDDINGS_FILEPATH'),
+        os.environ.get('EMBEDDINGS_TAIWAN_LAW_FILEPATH'),
         collection_name=os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
@@ -128,14 +128,22 @@ def get_indexer(target_name: str):
     from query.embeddings import QueryEmbeddings
 
     if target_name == 'investigation':
+        vectorstore_filepath = os.environ.get(
+            'EMBEDDINGS_INVESTIGATION_REPORTS_FILEPATH')
         collection_name = os.environ.get(
             'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME')
+    elif target_name == 'news':
+        vectorstore_filepath = os.environ.get(
+            'EMBEDDINGS_NEWS_FILEPATH')
+        collection_name = os.environ.get(
+            'EMBEDDINGS_NEWS_COLLECTION_NAME')
     else:
+        vectorstore_filepath = os.environ.get('EMBEDDINGS_TAIWAN_LAW_FILEPATH')
         collection_name = os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME')
 
     return QueryEmbeddings(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_FILEPATH'),
+        vectorstore_filepath=vectorstore_filepath,
         collection_name=collection_name)
 
 
@@ -238,7 +246,7 @@ if __name__ == '__main__':
     # get relevant documents by query
     parser.add_argument('--target-name',
                         type=str,
-                        choices=['law', 'investigation'],
+                        choices=['law', 'investigation', 'news'],
                         default='law',
                         help='query target name')
     parser.add_argument('--method',
