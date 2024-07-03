@@ -28,7 +28,7 @@ def get_indexer(target_name: str):
     from query.embeddings import QueryEmbeddings
 
     if target_name == 'investigation':
-        vectorstore_filepath=os.environ.get(
+        vectorstore_filepath = os.environ.get(
             'EMBEDDINGS_INVESTIGATION_REPORTS_FILEPATH')
         collection_name = os.environ.get(
             'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME')
