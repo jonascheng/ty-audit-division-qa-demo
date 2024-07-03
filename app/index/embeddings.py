@@ -292,21 +292,6 @@ class InvestigationReportEmbeddings(Embeddings):
 
 # A class to create embeddings for news in doc format
 class NewsEmbeddings(Embeddings):
-    # override init function
-    def __init__(
-            self,
-            src_filepath: str,
-            vectorstore_filepath: str,
-            collection_name: str = 'news',
-            chunk_size: int = 800,
-            chunk_overlap: int = 100,):
-        super().__init__(
-            src_filepath,
-            vectorstore_filepath,
-            collection_name,
-            chunk_size,
-            chunk_overlap,)
-
     # custom function to load documents from source filepath
     def _loader(self) -> list:
         from langchain_community.document_loaders import (

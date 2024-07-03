@@ -77,7 +77,7 @@ def create_law_embeddings():
         collection_name=os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
-        chunk_overlap=10
+        chunk_overlap=100
     ).run()
 
 
@@ -91,7 +91,7 @@ def create_order_embeddings():
         collection_name=os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME'),
         chunk_size=800,
-        chunk_overlap=10
+        chunk_overlap=100
     ).run()
 
 

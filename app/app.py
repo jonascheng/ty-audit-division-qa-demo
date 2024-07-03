@@ -28,14 +28,22 @@ def get_indexer(target_name: str):
     from query.embeddings import QueryEmbeddings
 
     if target_name == 'investigation':
+        vectorstore_filepath=os.environ.get(
+            'EMBEDDINGS_INVESTIGATION_REPORTS_FILEPATH')
         collection_name = os.environ.get(
             'EMBEDDINGS_INVESTIGATION_REPORTS_COLLECTION_NAME')
+    elif target_name == 'news':
+        vectorstore_filepath = os.environ.get(
+            'EMBEDDINGS_NEWS_FILEPATH')
+        collection_name = os.environ.get(
+            'EMBEDDINGS_NEWS_COLLECTION_NAME')
     else:
+        vectorstore_filepath = os.environ.get('EMBEDDINGS_TAIWAN_LAW_FILEPATH')
         collection_name = os.environ.get(
             'EMBEDDINGS_TAIWAN_LAW_COLLECTION_NAME')
 
     return QueryEmbeddings(
-        vectorstore_filepath=os.environ.get('EMBEDDINGS_TAIWAN_LAW_FILEPATH'),
+        vectorstore_filepath=vectorstore_filepath,
         collection_name=collection_name)
 
 
@@ -72,6 +80,9 @@ def handle_selectbox_change():
     elif st.session_state.target_name == const.APP_QUERY_TARGET_INVESTIGATION:
         if "investigation_indexer" not in st.session_state.keys():
             st.session_state.investigation_indexer = get_indexer('investigation')
+    elif st.session_state.target_name == const.APP_QUERY_TARGET_NEWS:
+        if "news_indexer" not in st.session_state.keys():
+            st.session_state.news_indexer = get_indexer('news')
 
 
 def login():
@@ -108,10 +119,16 @@ def login():
                             indexer=st.session_state.law_indexer,
                             top_k=10,
                             chain_type='stuff')
-                    else:
+                    elif st.session_state.target_name == const.APP_QUERY_TARGET_INVESTIGATION:
                         result_set = search_vector_store(
                             prompt_input=query_input,
                             indexer=st.session_state.investigation_indexer,
+                            top_k=5,
+                            chain_type='refine')
+                    elif st.session_state.target_name == const.APP_QUERY_TARGET_NEWS:
+                        result_set = search_vector_store(
+                            prompt_input=query_input,
+                            indexer=st.session_state.news_indexer,
                             top_k=5,
                             chain_type='refine')
                 except Exception as e:
