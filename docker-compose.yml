@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  tyaudit-app:
+    image: jonascheng/taoyuan-audit-division-qa-demo:latest
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tyaudit-app
+    expose:
+      - "8501"
+    volumes:
+      - ${PWD}/assets:/streamlit/assets
+    restart: unless-stopped
+
+  tyaudit-nginx:
+    image: jonascheng/nginx:latest
+    platform: linux/amd64
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: tyaudit-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - tyaudit-app
+    restart: unless-stopped

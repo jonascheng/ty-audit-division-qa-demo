@@ -6,6 +6,10 @@ primaryColor="purple"
 # Automatically rerun script when the file is modified on disk.
 # Default: false
 runOnSave = true
+maxMessageSize = 512
+enableWebsocketCompression = false
+enableCORS = false
+headless = true
 
 [browser]
 # Whether to send usage statistics to Streamlit.

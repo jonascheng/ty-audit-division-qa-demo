@@ -46,10 +46,7 @@ docker-push: docker-build ## push docker image
 
 .PHONY: docker-run
 docker-run: ## run docker image
-	${DOCKER} run -d --name tyaudit-app --restart unless-stopped \
-		-p 80:8501 -p 443:8501 \
-		-v ${PWD}/assets:/streamlit/assets \
-		${DOCKER_IMG_NAME}:${COMMIT_SHA}
+	docker-compose up -d --build --force-recreate --remove-orphans
 
 .PHONY: help
 help: ## prints this help message
