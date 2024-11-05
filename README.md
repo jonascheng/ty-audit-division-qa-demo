@@ -34,7 +34,7 @@ Provide these alternative questions in Traditional Chinese and separated by newl
 Original question: {question}
 ```
 
-* Different `chain_type` respectively for
+* Different `chain_type` as well as customized prompt respectively for
 
   * 法條: `stuff`
 
